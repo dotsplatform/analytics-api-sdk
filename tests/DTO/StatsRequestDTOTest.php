@@ -17,6 +17,8 @@ namespace Dotsplatform\AnalyticsApi\Tests\DTO;
 use Dotsplatform\AnalyticsApi\DTO\Requests\StatsRequestDTO;
 use Dotsplatform\AnalyticsApi\Enums\BreakdownDimension;
 use Dotsplatform\AnalyticsApi\Enums\Platform;
+use InvalidArgumentException;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 
 class StatsRequestDTOTest extends TestCase
@@ -73,6 +75,50 @@ class StatsRequestDTOTest extends TestCase
 
         $this->assertSame(Platform::ANDROID, $request->getPlatform());
         $this->assertSame(BreakdownDimension::BROWSER, $request->getDimension());
+    }
+
+    /**
+     * @return iterable<string, array{int}>
+     */
+    public static function invalidAccountIds(): iterable
+    {
+        yield 'zero' => [0];
+        yield 'negative' => [-5];
+    }
+
+    #[DataProvider('invalidAccountIds')]
+    public function testForAccountRejectsAnIdBelowOne(int $accountId): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('at least 1');
+
+        StatsRequestDTO::forAccount($accountId);
+    }
+
+    public function testFromArrayAndCopyRejectAnIdBelowOne(): void
+    {
+        $exceptionsCount = 0;
+
+        try {
+            StatsRequestDTO::fromArray(['accountId' => 0]);
+        } catch (InvalidArgumentException) {
+            $exceptionsCount++;
+        }
+
+        try {
+            StatsRequestDTO::forAccount(1)->copy(['accountId' => -1]);
+        } catch (InvalidArgumentException) {
+            $exceptionsCount++;
+        }
+
+        $this->assertSame(2, $exceptionsCount);
+    }
+
+    public function testAnAccountIdThatIsNotAnIntegerIsRejected(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+
+        StatsRequestDTO::fromArray(['accountId' => '42']);
     }
 
     public function testCopyKeepsTheOtherFields(): void

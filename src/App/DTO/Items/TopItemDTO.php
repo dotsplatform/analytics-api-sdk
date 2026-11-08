@@ -19,7 +19,7 @@ use Dotsplatform\AnalyticsApi\Support\ResponseField;
 
 class TopItemDTO extends DTO
 {
-    protected string $itemId;
+    protected ?string $itemId = null;
 
     protected int $views;
 
@@ -35,7 +35,7 @@ class TopItemDTO extends DTO
     public static function fromResponse(array $data): static
     {
         return static::fromArray([
-            'itemId' => ResponseField::string($data, 'item_id'),
+            'itemId' => ResponseField::nullableString($data, 'item_id'),
             'views' => ResponseField::int($data, 'views'),
             'addToCart' => ResponseField::int($data, 'add_to_cart'),
             'deviceDays' => ResponseField::int($data, 'device_days'),
@@ -44,9 +44,9 @@ class TopItemDTO extends DTO
     }
 
     /**
-     * The item id as the client apps send it (a string).
+     * The item id as the client apps send it (a string); null when the events carried none.
      */
-    public function getItemId(): string
+    public function getItemId(): ?string
     {
         return $this->itemId;
     }

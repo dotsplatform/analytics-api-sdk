@@ -40,6 +40,8 @@ class StubClientsTest extends TestCase
         $this->assertSame(0.0, $stats->getTopItems($request)->getItems()[1]->getAddToCartRate());
         $this->assertSame('shop.test/menu', $stats->getTopPages($request)->getPages()[0]->getPage());
         $this->assertCount(7, $stats->getHourlyVisits($request)->getWeekdays());
+        $this->assertCount(24, $stats->getHourlyVisits($request)->getHours());
+        $this->assertCount(7, $stats->getOverview($request)->getDaily());
     }
 
     public function testTheSuccessStubEchoesTheRequestFilters(): void
@@ -57,7 +59,11 @@ class StubClientsTest extends TestCase
         $this->assertSame('2026-10-31', $breakdown->getFilters()->getDateTo());
         $this->assertSame('android', $breakdown->getFilters()->getPlatform());
         $this->assertSame(BreakdownDimension::APP_VERSION, $breakdown->getDimension());
+        $this->assertSame(StubResponses::DEFAULT_LIMIT, $breakdown->getFilters()->getLimit());
         $this->assertSame('sample-1', $breakdown->getRows()[0]->getValue());
+        $this->assertNull($breakdown->getRows()[1]->getValue());
+        $this->assertCount(31, $stats->getOverview($request)->getDaily());
+        $this->assertCount(31, $stats->getActiveUsers($request)->getDaily());
     }
 
     /**

@@ -18,7 +18,7 @@ use Dotsplatform\AnalyticsApi\Support\ResponseField;
 
 class EventStatDTO extends DTO
 {
-    protected string $event;
+    protected ?string $event = null;
 
     protected int $events;
 
@@ -30,16 +30,16 @@ class EventStatDTO extends DTO
     public static function fromResponse(array $data): static
     {
         return static::fromArray([
-            'event' => ResponseField::string($data, 'event'),
+            'event' => ResponseField::nullableString($data, 'event'),
             'events' => ResponseField::int($data, 'events'),
             'deviceDays' => ResponseField::int($data, 'device_days'),
         ]);
     }
 
     /**
-     * The event name, e.g. "$pageview" or "add_to_cart".
+     * The event name, e.g. "$pageview" or "add_to_cart"; null when the rollup stored none.
      */
-    public function getEvent(): string
+    public function getEvent(): ?string
     {
         return $this->event;
     }

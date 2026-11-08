@@ -7,7 +7,8 @@ declare(strict_types=1);
  *
  * Sample Read API responses in the exact JSON shape the analytics service answers with (the Stats actions), used by
  * SuccessStatsStubClient and the SDK tests. The "filters" object echoes the request; a request without dates gets
- * the stub period.
+ * the stub period. Daily series have one row per day of that period and hours always 24 rows, like the service.
+ * The numbers are samples: the totals are not the sum of the rows.
  *
  * @copyright Copyright (c) DOTSPLATFORM, LLC
  * @author    Bogdan Mamontov <bohdan.mamontov@dotsplatform.com>
@@ -15,6 +16,7 @@ declare(strict_types=1);
 
 namespace Dotsplatform\AnalyticsApi\Clients\Stubs;
 
+use DateTimeImmutable;
 use Dotsplatform\AnalyticsApi\DTO\Requests\StatsRequestDTO;
 
 final class StubResponses
@@ -26,6 +28,12 @@ final class StubResponses
     public const string DATE_TO = '2026-11-08';
 
     public const string DEFAULT_DIMENSION = 'os';
+
+    public const int DEFAULT_LIMIT = 50;
+
+    private const int HOURS_IN_DAY = 24;
+
+    private const int MAX_DAYS = 366;
 
     /**
      * @return array<string, mixed>
@@ -39,10 +47,7 @@ final class StubResponses
                 ['platform' => 'ios'] + self::counters(30, 5, 0, 20, 4, 3, 4, 3),
                 ['platform' => 'web'] + self::counters(150, 35, 120, 40, 8, 3, 3, 18),
             ],
-            'daily' => [
-                ['date' => '2026-11-02'] + self::counters(100, 20, 70, 30, 6, 2, 2, 10),
-                ['date' => '2026-11-03'] + self::counters(80, 20, 50, 30, 6, 4, 5, 11),
-            ],
+            'daily' => self::overviewDaily($request),
         ];
     }
 
@@ -53,10 +58,7 @@ final class StubResponses
     {
         return [
             'filters' => self::filters($request),
-            'daily' => [
-                ['date' => '2026-11-02', 'dau' => 12, 'wau' => 40, 'mau' => 90],
-                ['date' => '2026-11-03', 'dau' => 15, 'wau' => 44, 'mau' => 92],
-            ],
+            'daily' => self::activeUsersDaily($request),
         ];
     }
 
@@ -75,7 +77,7 @@ final class StubResponses
     }
 
     /**
-     * The value key of each row is the dimension, as the service sends it.
+     * The second row has no value: devices that did not report the dimension.
      *
      * @return array<string, mixed>
      */
@@ -90,8 +92,8 @@ final class StubResponses
             'filters' => self::filters($request),
             'dimension' => $dimension,
             'rows' => [
-                [$dimension => 'sample-1', 'events' => 10, 'device_days' => 4],
-                [$dimension => 'sample-2', 'events' => 5, 'device_days' => 1],
+                ['value' => 'sample-1', 'events' => 10, 'device_days' => 4],
+                ['value' => null, 'events' => 5, 'device_days' => 1],
             ],
         ];
     }
@@ -105,8 +107,7 @@ final class StubResponses
             'filters' => self::filters($request),
             'items' => [
                 ['item_id' => 'pizza', 'views' => 100, 'add_to_cart' => 25, 'device_days' => 50, 'add_to_cart_rate' => 0.25],
-                // PHP's json_encode writes 0.0 as 0, so a zero rate arrives as an integer.
-                ['item_id' => 'sushi', 'views' => 70, 'add_to_cart' => 0, 'device_days' => 50, 'add_to_cart_rate' => 0],
+                ['item_id' => 'sushi', 'views' => 70, 'add_to_cart' => 0, 'device_days' => 50, 'add_to_cart_rate' => 0.0],
             ],
         ];
     }
@@ -132,24 +133,21 @@ final class StubResponses
     {
         return [
             'filters' => self::filters($request),
-            'hours' => [
-                ['hour' => 12, 'events' => 7, 'device_days' => 3],
-                ['hour' => 19, 'events' => 25, 'device_days' => 8],
-            ],
+            'hours' => self::hours(),
             'weekdays' => [
-                ['weekday' => 1, 'events' => 20, 'device_days' => 6],
-                ['weekday' => 2, 'events' => 12, 'device_days' => 5],
-                ['weekday' => 3, 'events' => 0, 'device_days' => 0],
-                ['weekday' => 4, 'events' => 0, 'device_days' => 0],
-                ['weekday' => 5, 'events' => 0, 'device_days' => 0],
-                ['weekday' => 6, 'events' => 0, 'device_days' => 0],
-                ['weekday' => 7, 'events' => 0, 'device_days' => 0],
+                ['weekday' => 1, 'events' => 20, 'device_hours' => 6],
+                ['weekday' => 2, 'events' => 12, 'device_hours' => 5],
+                ['weekday' => 3, 'events' => 0, 'device_hours' => 0],
+                ['weekday' => 4, 'events' => 0, 'device_hours' => 0],
+                ['weekday' => 5, 'events' => 0, 'device_hours' => 0],
+                ['weekday' => 6, 'events' => 0, 'device_hours' => 0],
+                ['weekday' => 7, 'events' => 0, 'device_hours' => 0],
             ],
         ];
     }
 
     /**
-     * @return array{account_id: int|null, date_from: string, date_to: string, platform: string|null}
+     * @return array{account_id: int|null, date_from: string, date_to: string, platform: string|null, limit: int}
      */
     public static function filters(StatsRequestDTO $request): array
     {
@@ -158,7 +156,80 @@ final class StubResponses
             'date_from' => $request->getDateFrom() ?? self::DATE_FROM,
             'date_to' => $request->getDateTo() ?? self::DATE_TO,
             'platform' => $request->getPlatform()?->value,
+            'limit' => $request->getLimit() ?? self::DEFAULT_LIMIT,
         ];
+    }
+
+    /**
+     * @return list<array<string, int|string>>
+     */
+    private static function overviewDaily(StatsRequestDTO $request): array
+    {
+        $daily = [];
+        foreach (self::periodDates($request) as $dayIndex => $date) {
+            $daily[] = ['date' => $date] + self::counters(100 + $dayIndex, 20, 70, 30, 6, 2, 2, 10);
+        }
+
+        return $daily;
+    }
+
+    /**
+     * @return list<array{date: string, dau: int, wau: int, mau: int}>
+     */
+    private static function activeUsersDaily(StatsRequestDTO $request): array
+    {
+        $daily = [];
+        foreach (self::periodDates($request) as $dayIndex => $date) {
+            $daily[] = ['date' => $date, 'dau' => 12 + $dayIndex, 'wau' => 40, 'mau' => 90];
+        }
+
+        return $daily;
+    }
+
+    /**
+     * Every day of the echoed period, Y-m-d, at most 366 (the service's range limit).
+     *
+     * @return list<string>
+     */
+    private static function periodDates(StatsRequestDTO $request): array
+    {
+        $filters = self::filters($request);
+        $firstDate = DateTimeImmutable::createFromFormat('!Y-m-d', $filters['date_from']);
+        $lastDate = DateTimeImmutable::createFromFormat('!Y-m-d', $filters['date_to']);
+        if ($firstDate === false || $lastDate === false) {
+            return [];
+        }
+
+        $dates = [];
+        $date = $firstDate;
+        while ($date <= $lastDate) {
+            $dates[] = $date->format('Y-m-d');
+            if (count($dates) >= self::MAX_DAYS) {
+                break;
+            }
+
+            $date = $date->modify('+1 day');
+        }
+
+        return $dates;
+    }
+
+    /**
+     * Always 24 rows; the evening is busiest.
+     *
+     * @return list<array{hour: int, events: int, device_hours: int}>
+     */
+    private static function hours(): array
+    {
+        $hours = [];
+        for ($hour = 0; $hour < self::HOURS_IN_DAY; $hour++) {
+            $hours[] = ['hour' => $hour, 'events' => 0, 'device_hours' => 0];
+        }
+
+        $hours[12] = ['hour' => 12, 'events' => 7, 'device_hours' => 3];
+        $hours[19] = ['hour' => 19, 'events' => 25, 'device_hours' => 8];
+
+        return $hours;
     }
 
     /**

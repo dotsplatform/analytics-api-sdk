@@ -6,7 +6,7 @@ declare(strict_types=1);
  * Description of WeekdayVisitsDTO.php
  *
  * Events and devices of one ISO weekday (1 = Monday … 7 = Sunday) summed over the period. All 7 weekdays are returned.
- * deviceDays sums hourly devices, so a device active in two hours of a day counts twice: use it to compare weekdays.
+ * deviceHours sums hourly devices, so a device active in two hours of a day counts twice: use it to compare weekdays.
  *
  * @copyright Copyright (c) DOTSPLATFORM, LLC
  * @author    Bogdan Mamontov <bohdan.mamontov@dotsplatform.com>
@@ -23,7 +23,7 @@ class WeekdayVisitsDTO extends DTO
 
     protected int $events;
 
-    protected int $deviceDays;
+    protected int $deviceHours;
 
     /**
      * @param  array<array-key, mixed>  $data
@@ -33,7 +33,7 @@ class WeekdayVisitsDTO extends DTO
         return static::fromArray([
             'weekday' => ResponseField::int($data, 'weekday'),
             'events' => ResponseField::int($data, 'events'),
-            'deviceDays' => ResponseField::int($data, 'device_days'),
+            'deviceHours' => ResponseField::int($data, 'device_hours'),
         ]);
     }
 
@@ -53,8 +53,8 @@ class WeekdayVisitsDTO extends DTO
     /**
      * Hourly unique devices summed over the days.
      */
-    public function getDeviceDays(): int
+    public function getDeviceHours(): int
     {
-        return $this->deviceDays;
+        return $this->deviceHours;
     }
 }

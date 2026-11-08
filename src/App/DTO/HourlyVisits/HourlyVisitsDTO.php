@@ -45,7 +45,7 @@ class HourlyVisitsDTO extends DTO
     }
 
     /**
-     * Ordered by hour; hours without data are missing.
+     * Always 24 rows, hour 0 first (0 for hours without data).
      *
      * @return list<HourVisitsDTO>
      */

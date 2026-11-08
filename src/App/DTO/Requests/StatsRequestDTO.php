@@ -8,7 +8,7 @@ declare(strict_types=1);
  * The filters of every Read API call: the account (an id, or null for all accounts), the period (Y-m-d, both ends
  * included, at most 366 days), the platform and the top-list limit (1–500). The dimension is used only by the
  * platform breakdown. A field left null is not sent, so the service default applies: the last 30 days (Kyiv time),
- * every platform, limit 50, dimension "os".
+ * every platform, limit 50, dimension "os". An account id below 1 is rejected (the service answers 404 for it).
  *
  *     StatsRequestDTO::forAccount(42, '2026-11-01', '2026-11-07');
  *     StatsRequestDTO::forAllAccounts()->copy(['platform' => Platform::IOS, 'limit' => 10]);
@@ -22,6 +22,7 @@ namespace Dotsplatform\AnalyticsApi\DTO\Requests;
 use Dots\Data\DTO;
 use Dotsplatform\AnalyticsApi\Enums\BreakdownDimension;
 use Dotsplatform\AnalyticsApi\Enums\Platform;
+use InvalidArgumentException;
 
 class StatsRequestDTO extends DTO
 {
@@ -29,6 +30,8 @@ class StatsRequestDTO extends DTO
      * The {account} path segment that means "every account, events without a resolved account included".
      */
     public const string ALL_ACCOUNTS = 'all';
+
+    private const int MIN_ACCOUNT_ID = 1;
 
     protected ?int $accountId = null;
 
@@ -42,6 +45,9 @@ class StatsRequestDTO extends DTO
 
     protected ?BreakdownDimension $dimension = null;
 
+    /**
+     * @throws InvalidArgumentException when the account id is below 1
+     */
     public static function forAccount(int $accountId, ?string $dateFrom = null, ?string $dateTo = null): static
     {
         return static::fromArray([
@@ -152,5 +158,27 @@ class StatsRequestDTO extends DTO
         }
 
         return $query;
+    }
+
+    /**
+     * Runs for every way of building the DTO (forAccount, fromArray, copy), so an invalid account id never reaches the
+     * path.
+     *
+     * @param  array<array-key, mixed>  $data
+     */
+    protected function assertConstructDataIsValid(array $data): void
+    {
+        $accountId = $data['accountId'] ?? null;
+        if ($accountId === null) {
+            return;
+        }
+
+        if (! is_int($accountId)) {
+            throw new InvalidArgumentException('The account id must be an integer or null (all accounts).');
+        }
+
+        if ($accountId < self::MIN_ACCOUNT_ID) {
+            throw new InvalidArgumentException(sprintf('The account id must be at least %d, %d given.', self::MIN_ACCOUNT_ID, $accountId));
+        }
     }
 }

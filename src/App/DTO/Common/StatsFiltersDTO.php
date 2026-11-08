@@ -6,7 +6,8 @@ declare(strict_types=1);
  * Description of StatsFiltersDTO.php
  *
  * The "filters" object every Read API response echoes: the account (null = all accounts), the period the service
- * used (its defaults filled in) and the platform (null = every platform). The limit and the dimension are not echoed.
+ * used (its defaults filled in), the platform (null = every platform) and the top-list limit. The dimension is not
+ * echoed here; the platform breakdown returns it next to the rows.
  * The platform is the raw string, so a platform this SDK version does not know never breaks a response.
  *
  * @copyright Copyright (c) DOTSPLATFORM, LLC
@@ -28,6 +29,8 @@ class StatsFiltersDTO extends DTO
 
     protected ?string $platform = null;
 
+    protected int $limit;
+
     /**
      * @param  array<array-key, mixed>  $data
      */
@@ -38,6 +41,7 @@ class StatsFiltersDTO extends DTO
             'dateFrom' => ResponseField::string($data, 'date_from'),
             'dateTo' => ResponseField::string($data, 'date_to'),
             'platform' => ResponseField::nullableString($data, 'platform'),
+            'limit' => ResponseField::int($data, 'limit'),
         ]);
     }
 
@@ -71,5 +75,13 @@ class StatsFiltersDTO extends DTO
     public function getPlatform(): ?string
     {
         return $this->platform;
+    }
+
+    /**
+     * The size of the top lists (the service default 50 when the request sent none).
+     */
+    public function getLimit(): int
+    {
+        return $this->limit;
     }
 }

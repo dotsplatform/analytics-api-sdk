@@ -18,7 +18,7 @@ use Dotsplatform\AnalyticsApi\Support\ResponseField;
 
 class TopPageDTO extends DTO
 {
-    protected string $page;
+    protected ?string $page = null;
 
     protected int $views;
 
@@ -30,16 +30,16 @@ class TopPageDTO extends DTO
     public static function fromResponse(array $data): static
     {
         return static::fromArray([
-            'page' => ResponseField::string($data, 'page'),
+            'page' => ResponseField::nullableString($data, 'page'),
             'views' => ResponseField::int($data, 'views'),
             'deviceDays' => ResponseField::int($data, 'device_days'),
         ]);
     }
 
     /**
-     * Web: host + path, e.g. "shop.test/menu"; apps: the screen name.
+     * Web: host + path, e.g. "shop.test/menu"; apps: the screen name; null when the events carried none.
      */
-    public function getPage(): string
+    public function getPage(): ?string
     {
         return $this->page;
     }

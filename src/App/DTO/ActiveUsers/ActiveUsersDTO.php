@@ -41,7 +41,7 @@ class ActiveUsersDTO extends DTO
     }
 
     /**
-     * Ordered by date; days without data are missing.
+     * One row per day of the period, ordered by date (0 for days without data).
      *
      * @return list<ActiveUsersDayDTO>
      */

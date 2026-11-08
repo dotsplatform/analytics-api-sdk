@@ -39,6 +39,7 @@ class StatsHttpClientTest extends HttpClientTestCase
         $this->assertSame('2026-11-01', $overview->getFilters()->getDateFrom());
         $this->assertSame('2026-11-07', $overview->getFilters()->getDateTo());
         $this->assertNull($overview->getFilters()->getPlatform());
+        $this->assertSame(StubResponses::DEFAULT_LIMIT, $overview->getFilters()->getLimit());
         $this->assertSame(180, $overview->getTotals()->getEvents());
         $this->assertSame(40, $overview->getTotals()->getSessions());
         $this->assertSame(120, $overview->getTotals()->getPageViews());
@@ -50,8 +51,10 @@ class StatsHttpClientTest extends HttpClientTestCase
         $this->assertCount(2, $overview->getPlatforms());
         $this->assertSame('ios', $overview->getPlatforms()[0]->getPlatform());
         $this->assertSame(4, $overview->getPlatforms()[0]->getCounters()->getPurchases());
-        $this->assertSame('2026-11-03', $overview->getDaily()[1]->getDate());
-        $this->assertSame(80, $overview->getDaily()[1]->getCounters()->getEvents());
+        $this->assertCount(7, $overview->getDaily());
+        $this->assertSame('2026-11-01', $overview->getDaily()[0]->getDate());
+        $this->assertSame('2026-11-07', $overview->getDaily()[6]->getDate());
+        $this->assertSame(101, $overview->getDaily()[1]->getCounters()->getEvents());
     }
 
     public function testAllAccountsUseTheAllSegmentAndEchoANullAccount(): void
@@ -88,7 +91,8 @@ class StatsHttpClientTest extends HttpClientTestCase
 
         $this->assertLastRequest('GET', self::ACCOUNT_PATH.'active-users');
         $this->assertSame('ios', $this->getLastRequestQuery()['platform'] ?? null);
-        $this->assertSame('2026-11-02', $activeUsers->getDaily()[0]->getDate());
+        $this->assertCount(7, $activeUsers->getDaily());
+        $this->assertSame('2026-11-01', $activeUsers->getDaily()[0]->getDate());
         $this->assertSame(12, $activeUsers->getDaily()[0]->getDau());
         $this->assertSame(40, $activeUsers->getDaily()[0]->getWau());
         $this->assertSame(90, $activeUsers->getDaily()[0]->getMau());
@@ -103,6 +107,7 @@ class StatsHttpClientTest extends HttpClientTestCase
 
         $this->assertLastRequest('GET', self::ACCOUNT_PATH.'events');
         $this->assertSame('10', $this->getLastRequestQuery()['limit'] ?? null);
+        $this->assertSame(10, $eventStats->getFilters()->getLimit());
         $this->assertSame('$pageview', $eventStats->getEvents()[0]->getEvent());
         $this->assertSame(30, $eventStats->getEvents()[0]->getEvents());
         $this->assertSame(9, $eventStats->getEvents()[0]->getDeviceDays());
@@ -115,8 +120,8 @@ class StatsHttpClientTest extends HttpClientTestCase
             'filters' => StubResponses::filters($request),
             'dimension' => 'app_version',
             'rows' => [
-                ['app_version' => '5.6.0', 'events' => 10, 'device_days' => 4],
-                ['app_version' => '', 'events' => 5, 'device_days' => 1],
+                ['value' => '5.6.0', 'events' => 10, 'device_days' => 4],
+                ['value' => null, 'events' => 5, 'device_days' => 1],
             ],
         ]);
 
@@ -129,7 +134,7 @@ class StatsHttpClientTest extends HttpClientTestCase
         $this->assertSame('5.6.0', $breakdown->getRows()[0]->getValue());
         $this->assertSame(10, $breakdown->getRows()[0]->getEvents());
         $this->assertSame(4, $breakdown->getRows()[0]->getDeviceDays());
-        $this->assertSame('', $breakdown->getRows()[1]->getValue());
+        $this->assertNull($breakdown->getRows()[1]->getValue());
     }
 
     public function testTheDimensionIsSentOnlyToThePlatformBreakdown(): void
@@ -148,7 +153,7 @@ class StatsHttpClientTest extends HttpClientTestCase
         $this->queueJsonResponse([
             'filters' => StubResponses::filters($request),
             'dimension' => 'device_model',
-            'rows' => [['device_model' => 'iPhone15,2', 'events' => 3, 'device_days' => 1]],
+            'rows' => [['value' => 'iPhone15,2', 'events' => 3, 'device_days' => 1]],
         ]);
 
         $breakdown = $this->makeClient()->stats()->getPlatformBreakdown($request);
@@ -174,14 +179,30 @@ class StatsHttpClientTest extends HttpClientTestCase
         $this->assertSame(0.25, $topItems->getItems()[0]->getAddToCartRate());
     }
 
-    public function testAZeroAddToCartRateEncodedAsAnIntegerIsAFloat(): void
+    public function testAZeroAddToCartRateIsAFloatWhetherSentAs0Point0OrAs0(): void
     {
         $request = $this->makeRequest();
-        $this->queueRawResponse('{"filters":{"account_id":291,"date_from":"2026-11-01","date_to":"2026-11-07","platform":null},"items":[{"item_id":"sushi","views":70,"add_to_cart":0,"device_days":50,"add_to_cart_rate":0}]}');
+        $this->queueRawResponse('{"filters":{"account_id":291,"date_from":"2026-11-01","date_to":"2026-11-07","platform":null,"limit":50},"items":[{"item_id":"sushi","views":70,"add_to_cart":0,"device_days":50,"add_to_cart_rate":0.0}]}');
+        $this->queueRawResponse('{"filters":{"account_id":291,"date_from":"2026-11-01","date_to":"2026-11-07","platform":null,"limit":50},"items":[{"item_id":"sushi","views":70,"add_to_cart":0,"device_days":50,"add_to_cart_rate":0}]}');
 
-        $topItems = $this->makeClient()->stats()->getTopItems($request);
+        $fromFloat = $this->makeClient()->stats()->getTopItems($request);
+        $fromInteger = $this->makeClient()->stats()->getTopItems($request);
 
-        $this->assertSame(0.0, $topItems->getItems()[0]->getAddToCartRate());
+        $this->assertSame(0.0, $fromFloat->getItems()[0]->getAddToCartRate());
+        $this->assertSame(0.0, $fromInteger->getItems()[0]->getAddToCartRate());
+    }
+
+    public function testMissingKeyValuesAreNull(): void
+    {
+        $request = $this->makeRequest();
+        $filters = StubResponses::filters($request);
+        $this->queueJsonResponse(['filters' => $filters, 'events' => [['event' => null, 'events' => 2, 'device_days' => 1]]]);
+        $this->queueJsonResponse(['filters' => $filters, 'items' => [['item_id' => null, 'views' => 3, 'add_to_cart' => 1, 'device_days' => 2, 'add_to_cart_rate' => 0.3333]]]);
+        $this->queueJsonResponse(['filters' => $filters, 'pages' => [['page' => null, 'views' => 4, 'device_days' => 2]]]);
+
+        $this->assertNull($this->makeClient()->stats()->getEventStats($request)->getEvents()[0]->getEvent());
+        $this->assertNull($this->makeClient()->stats()->getTopItems($request)->getItems()[0]->getItemId());
+        $this->assertNull($this->makeClient()->stats()->getTopPages($request)->getPages()[0]->getPage());
     }
 
     public function testReadsTopPages(): void
@@ -205,9 +226,12 @@ class StatsHttpClientTest extends HttpClientTestCase
         $hourlyVisits = $this->makeClient()->stats()->getHourlyVisits($request);
 
         $this->assertLastRequest('GET', self::ACCOUNT_PATH.'hourly-visits');
-        $this->assertSame(19, $hourlyVisits->getHours()[1]->getHour());
-        $this->assertSame(25, $hourlyVisits->getHours()[1]->getEvents());
-        $this->assertSame(8, $hourlyVisits->getHours()[1]->getDeviceDays());
+        $this->assertCount(24, $hourlyVisits->getHours());
+        $this->assertSame(0, $hourlyVisits->getHours()[0]->getEvents());
+        $this->assertSame(19, $hourlyVisits->getHours()[19]->getHour());
+        $this->assertSame(25, $hourlyVisits->getHours()[19]->getEvents());
+        $this->assertSame(8, $hourlyVisits->getHours()[19]->getDeviceHours());
+        $this->assertSame(6, $hourlyVisits->getWeekdays()[0]->getDeviceHours());
         $this->assertCount(7, $hourlyVisits->getWeekdays());
         $this->assertSame(1, $hourlyVisits->getWeekdays()[0]->getWeekday());
         $this->assertSame(20, $hourlyVisits->getWeekdays()[0]->getEvents());

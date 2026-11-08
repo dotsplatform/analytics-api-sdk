@@ -32,12 +32,10 @@ class PlatformBreakdownDTO extends DTO
      */
     public static function fromResponse(array $data): static
     {
-        $dimension = ResponseField::string($data, 'dimension');
-
         return static::fromArray([
             'filters' => StatsFiltersDTO::fromResponse(ResponseField::object($data, 'filters')),
-            'dimension' => $dimension,
-            'rows' => self::readRows($data, $dimension),
+            'dimension' => ResponseField::string($data, 'dimension'),
+            'rows' => self::readRows($data),
         ]);
     }
 
@@ -74,11 +72,11 @@ class PlatformBreakdownDTO extends DTO
      * @param  array<array-key, mixed>  $data
      * @return list<PlatformBreakdownRowDTO>
      */
-    private static function readRows(array $data, string $dimension): array
+    private static function readRows(array $data): array
     {
         $rows = [];
         foreach (ResponseField::listOfObjects($data, 'rows') as $rowData) {
-            $rows[] = PlatformBreakdownRowDTO::fromResponse($rowData, $dimension);
+            $rows[] = PlatformBreakdownRowDTO::fromResponse($rowData);
         }
 
         return $rows;

@@ -5,7 +5,7 @@ declare(strict_types=1);
 /**
  * Description of AccountOverviewDTO.php
  *
- * GET overview: the period totals, the same split by platform, and one row per day.
+ * GET overview: the period totals, the same split by platform, and one row per day of the period.
  *
  * @copyright Copyright (c) DOTSPLATFORM, LLC
  * @author    Bogdan Mamontov <bohdan.mamontov@dotsplatform.com>
@@ -64,7 +64,7 @@ class AccountOverviewDTO extends DTO
     }
 
     /**
-     * Ordered by date; days without data are missing.
+     * One row per day of the period, ordered by date (counters 0 for days without data).
      *
      * @return list<DailyTotalsDTO>
      */

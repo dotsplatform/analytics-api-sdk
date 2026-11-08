@@ -42,14 +42,14 @@ Every method takes one `StatsRequestDTO`:
 
 | Field | Query | Meaning |
 |---|---|---|
-| `accountId` | path `{account}` | An account id, or `null` for all accounts (the path segment `all`; includes events with no resolved account) |
+| `accountId` | path `{account}` | An account id (1 or more; a lower id throws `InvalidArgumentException`), or `null` for all accounts (the path segment `all`; includes events with no resolved account) |
 | `dateFrom`, `dateTo` | `date_from`, `date_to` | `Y-m-d`, both days included, at most 366 days |
 | `platform` | `platform` | `Platform` enum: `WEB`, `IOS`, `ANDROID`, `SERVER`, `UNKNOWN` |
 | `limit` | `limit` | Size of the top lists (events, platforms, items, pages), 1–500 |
 | `dimension` | `dimension` | `BreakdownDimension` enum, sent **only** by `getPlatformBreakdown()`: `PLATFORM`, `OS`, `OS_VERSION`, `BROWSER`, `BROWSER_VERSION`, `APP_VERSION` |
 
 A field left `null` is not sent, so the service default applies: the last 30 days in Kyiv time, every platform,
-limit 50 and dimension `os`. The response `getFilters()` shows the account, period and platform the service used.
+limit 50 and dimension `os`. The response `getFilters()` shows the account, period, platform and limit the service used.
 
 ```php
 use Dotsplatform\AnalyticsApi\Enums\BreakdownDimension;
@@ -75,10 +75,10 @@ All are on `$analyticsClient->stats()`:
 | `getPlatformBreakdown($request)` | `platforms` | `PlatformBreakdownDTO`: `getDimension()` (`?BreakdownDimension`), `getDimensionValue()` (raw string), `getRows()`, a list of `PlatformBreakdownRowDTO` (`getValue()`, `getEvents()`, `getDeviceDays()`), most device-days first |
 | `getTopItems($request)` | `items` | `TopItemsDTO`: `getItems()`, a list of `TopItemDTO` (`getItemId()`, `getViews()`, `getAddToCart()`, `getDeviceDays()`, `getAddToCartRate()`), most viewed first |
 | `getTopPages($request)` | `pages` | `TopPagesDTO`: `getPages()`, a list of `TopPageDTO` (`getPage()`, `getViews()`, `getDeviceDays()`), most viewed first |
-| `getHourlyVisits($request)` | `hourly-visits` | `HourlyVisitsDTO`: `getHours()` (list of `HourVisitsDTO`: `getHour()` 0–23), `getWeekdays()` (list of `WeekdayVisitsDTO`: `getWeekday()` 1 = Monday … 7 = Sunday) |
+| `getHourlyVisits($request)` | `hourly-visits` | `HourlyVisitsDTO`: `getHours()` (24 `HourVisitsDTO`: `getHour()` 0–23, `getEvents()`, `getDeviceHours()`), `getWeekdays()` (7 `WeekdayVisitsDTO`: `getWeekday()` 1 = Monday … 7 = Sunday, `getEvents()`, `getDeviceHours()`) |
 
 Every response DTO also has `getFilters()` (`StatsFiltersDTO`: `getAccountId()`, `getDateFrom()`, `getDateTo()`,
-`getPlatform()`).
+`getPlatform()`, `getLimit()`).
 
 `CountersDTO` has `getEvents()`, `getSessions()`, `getPageViews()`, `getItemViews()`, `getAddToCart()`,
 `getCheckouts()`, `getPurchases()` and `getDeviceDays()`.
@@ -86,12 +86,15 @@ Every response DTO also has `getFilters()` (`StatsFiltersDTO`: `getAccountId()`,
 ### Reading the numbers
 
 - **Device-days** (`getDeviceDays()`) sum daily unique devices: a device active on 3 days counts 3. Compare it
-  between periods; do not show it as a user count. In hourly visits it sums hourly devices, so a device active in two
-  hours of a day counts twice.
+  between periods; do not show it as a user count.
+- **Device-hours** (`getDeviceHours()`, hourly visits only) sum hourly unique devices: a device active in two hours of
+  a day counts twice. Use it to compare hours and weekdays.
 - **Active users for all accounts** are per-account numbers summed: a device used in two accounts counts twice.
-- **Sparse series**: overview `getDaily()`, active users `getDaily()` and `getHours()` leave out days and hours without
-  data. Fill the gaps yourself for a chart. `getWeekdays()` always has 7 rows.
-- **Breakdown values**: a device that did not report the dimension (no OS version, no app version) comes as `""`.
+- **Gap-free series**: overview `getDaily()` and active users `getDaily()` have one row per day of the period,
+  `getHours()` always has 24 rows and `getWeekdays()` 7; days and hours without data have zeros.
+- **Missing values are null**: a breakdown row of devices that did not report the dimension (no OS version, no app
+  version) has `getValue() === null`; likewise `EventStatDTO::getEvent()`, `TopItemDTO::getItemId()` and
+  `TopPageDTO::getPage()` return null when the events carried no value.
 - **Add-to-cart rate** is `add_to_cart / views` rounded to 4 decimals, `0.0` when there were no views.
 - Platforms and dimensions in responses are kept as **raw strings**, so a value this SDK version does not know never
   breaks a response (`PlatformBreakdownDTO::getDimension()` returns null for it). Requests take enums only.
@@ -104,7 +107,7 @@ Every call may throw a subclass of `Dotsplatform\AnalyticsApi\Exceptions\Analyti
 |---|---|
 | `AnalyticsValidationException` | 422: `getErrors()` / `getErrorsFor('date_to')`, Laravel style (bad date format, `date_to` before `date_from`, range over 366 days, unknown platform, limit out of 1–500) |
 | `AnalyticsUnauthorizedException` | 401: wrong or missing token |
-| `AnalyticsNotFoundException` | 404: the path does not exist |
+| `AnalyticsNotFoundException` | 404: the path does not exist (the service also answers 404 for account 0) |
 | `AnalyticsRateLimitException` | 429: `getRetryAfterSeconds()` |
 | `AnalyticsServerException` | any other error status |
 | `AnalyticsConnectionException` | no response (DNS, timeout, refused) |

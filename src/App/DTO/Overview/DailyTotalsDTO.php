@@ -5,7 +5,7 @@ declare(strict_types=1);
 /**
  * Description of DailyTotalsDTO.php
  *
- * One day of the overview: the date and its counters. Days without data are not returned.
+ * One day of the overview: the date and its counters (all 0 for a day without data).
  *
  * @copyright Copyright (c) DOTSPLATFORM, LLC
  * @author    Bogdan Mamontov <bohdan.mamontov@dotsplatform.com>
