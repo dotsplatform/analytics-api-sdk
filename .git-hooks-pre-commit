@@ -1,0 +1,5 @@
+#!/bin/sh
+
+vendor/bin/php-cs-fixer fix
+vendor/bin/phpstan analyse --memory-limit=2G
+vendor/bin/phpunit
