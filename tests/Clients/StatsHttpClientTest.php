@@ -22,9 +22,9 @@ use Dotsplatform\AnalyticsApi\Tests\HttpClientTestCase;
 
 class StatsHttpClientTest extends HttpClientTestCase
 {
-    private const int ACCOUNT = StubResponses::ACCOUNT_ID;
+    private const string ACCOUNT = StubResponses::ACCOUNT_TOKEN;
 
-    private const string ACCOUNT_PATH = '/api/v1/accounts/291/';
+    private const string ACCOUNT_PATH = '/api/v1/accounts/'.StubResponses::ACCOUNT_TOKEN.'/';
 
     public function testReadsTheOverview(): void
     {
@@ -35,7 +35,7 @@ class StatsHttpClientTest extends HttpClientTestCase
 
         $this->assertLastRequest('GET', self::ACCOUNT_PATH.'overview');
         $this->assertSame(['date_from' => '2026-11-01', 'date_to' => '2026-11-07'], $this->getLastRequestQuery());
-        $this->assertSame(self::ACCOUNT, $overview->getFilters()->getAccountId());
+        $this->assertSame(self::ACCOUNT, $overview->getFilters()->getAccountToken());
         $this->assertSame('2026-11-01', $overview->getFilters()->getDateFrom());
         $this->assertSame('2026-11-07', $overview->getFilters()->getDateTo());
         $this->assertNull($overview->getFilters()->getPlatform());
@@ -66,7 +66,7 @@ class StatsHttpClientTest extends HttpClientTestCase
 
         $this->assertLastRequest('GET', '/api/v1/accounts/all/overview');
         $this->assertSame(['date_from' => '2026-11-01', 'date_to' => '2026-11-07', 'platform' => 'web'], $this->getLastRequestQuery());
-        $this->assertNull($overview->getFilters()->getAccountId());
+        $this->assertNull($overview->getFilters()->getAccountToken());
         $this->assertSame('web', $overview->getFilters()->getPlatform());
     }
 
@@ -164,6 +164,33 @@ class StatsHttpClientTest extends HttpClientTestCase
         $this->assertSame('iPhone15,2', $breakdown->getRows()[0]->getValue());
     }
 
+    public function testReadsTopCategories(): void
+    {
+        $request = $this->makeRequest();
+        $this->queueJsonResponse(StubResponses::topCategories($request));
+
+        $categories = $this->makeClient()->stats()->getTopCategories($request);
+
+        $this->assertLastRequest('GET', self::ACCOUNT_PATH.'categories');
+        $this->assertSame(self::ACCOUNT, $categories->getFilters()->getAccountToken());
+        $this->assertSame('Pizza', $categories->getCategories()[0]->getCategory());
+        $this->assertSame(2, $categories->getCategories()[0]->getItems());
+        $this->assertSame(0.25, $categories->getCategories()[0]->getAddToCartRate());
+        $this->assertNull($categories->getCategories()[1]->getCategory());
+    }
+
+    public function testListsAccounts(): void
+    {
+        $this->queueJsonResponse(StubResponses::accounts());
+
+        $accounts = $this->makeClient()->stats()->getAccounts()->getAccounts();
+
+        $this->assertLastRequest('GET', '/api/v1/accounts');
+        $this->assertSame(self::ACCOUNT, $accounts[0]->getToken());
+        $this->assertSame('Stub Pizza', $accounts[0]->getName());
+        $this->assertSame('https://assets.dots.live/misteram-public/stub-logo.webp', $accounts[0]->getLogoUrl());
+    }
+
     public function testReadsTopItemsWithTheAddToCartRate(): void
     {
         $request = $this->makeRequest()->copy(['limit' => 1]);
@@ -172,7 +199,10 @@ class StatsHttpClientTest extends HttpClientTestCase
         $topItems = $this->makeClient()->stats()->getTopItems($request);
 
         $this->assertLastRequest('GET', self::ACCOUNT_PATH.'items');
-        $this->assertSame('pizza', $topItems->getItems()[0]->getItemId());
+        $this->assertSame('0190a1b2-0000-7000-8000-000000000001', $topItems->getItems()[0]->getItemId());
+        $this->assertSame('Margherita', $topItems->getItems()[0]->getName());
+        $this->assertSame('Pizza', $topItems->getItems()[0]->getCategory());
+        $this->assertNull($topItems->getItems()[1]->getName());
         $this->assertSame(100, $topItems->getItems()[0]->getViews());
         $this->assertSame(25, $topItems->getItems()[0]->getAddToCart());
         $this->assertSame(50, $topItems->getItems()[0]->getDeviceDays());
@@ -182,8 +212,8 @@ class StatsHttpClientTest extends HttpClientTestCase
     public function testAZeroAddToCartRateIsAFloatWhetherSentAs0Point0OrAs0(): void
     {
         $request = $this->makeRequest();
-        $this->queueRawResponse('{"filters":{"account_id":291,"date_from":"2026-11-01","date_to":"2026-11-07","platform":null,"limit":50},"items":[{"item_id":"sushi","views":70,"add_to_cart":0,"device_days":50,"add_to_cart_rate":0.0}]}');
-        $this->queueRawResponse('{"filters":{"account_id":291,"date_from":"2026-11-01","date_to":"2026-11-07","platform":null,"limit":50},"items":[{"item_id":"sushi","views":70,"add_to_cart":0,"device_days":50,"add_to_cart_rate":0}]}');
+        $this->queueRawResponse('{"filters":{"account":"01890f3e-1b2c-7abc-9def-000000000291","date_from":"2026-11-01","date_to":"2026-11-07","platform":null,"limit":50},"items":[{"item_id":"sushi","views":70,"add_to_cart":0,"device_days":50,"add_to_cart_rate":0.0}]}');
+        $this->queueRawResponse('{"filters":{"account":"01890f3e-1b2c-7abc-9def-000000000291","date_from":"2026-11-01","date_to":"2026-11-07","platform":null,"limit":50},"items":[{"item_id":"sushi","views":70,"add_to_cart":0,"device_days":50,"add_to_cart_rate":0}]}');
 
         $fromFloat = $this->makeClient()->stats()->getTopItems($request);
         $fromInteger = $this->makeClient()->stats()->getTopItems($request);

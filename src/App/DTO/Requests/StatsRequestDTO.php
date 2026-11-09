@@ -5,12 +5,13 @@ declare(strict_types=1);
 /**
  * Description of StatsRequestDTO.php
  *
- * The filters of every Read API call: the account (an id, or null for all accounts), the period (Y-m-d, both ends
- * included, at most 366 days), the platform and the top-list limit (1–500). The dimension is used only by the
- * platform breakdown. A field left null is not sent, so the service default applies: the last 30 days (Kyiv time),
- * every platform, limit 50, dimension "os". An account id below 1 is rejected (the service answers 404 for it).
+ * The filters of every Read API call: the account (its livesite token, a uuid, or null for all accounts), the period
+ * (Y-m-d, both ends included, at most 366 days), the platform and the top-list limit (1–500). The dimension is used
+ * only by the platform breakdown. A field left null is not sent, so the service default applies: the last 30 days
+ * (Kyiv time), every platform, limit 50, dimension "os". A token that is not a uuid is rejected here; a uuid the
+ * service does not know answers 404 (AnalyticsNotFoundException).
  *
- *     StatsRequestDTO::forAccount(42, '2026-11-01', '2026-11-07');
+ *     StatsRequestDTO::forAccount($account->token, '2026-11-01', '2026-11-07');
  *     StatsRequestDTO::forAllAccounts()->copy(['platform' => Platform::IOS, 'limit' => 10]);
  *
  * @copyright Copyright (c) DOTSPLATFORM, LLC
@@ -31,9 +32,9 @@ class StatsRequestDTO extends DTO
      */
     public const string ALL_ACCOUNTS = 'all';
 
-    private const int MIN_ACCOUNT_ID = 1;
+    private const string UUID_PATTERN = '/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i';
 
-    protected ?int $accountId = null;
+    protected ?string $accountToken = null;
 
     protected ?string $dateFrom = null;
 
@@ -46,12 +47,14 @@ class StatsRequestDTO extends DTO
     protected ?BreakdownDimension $dimension = null;
 
     /**
-     * @throws InvalidArgumentException when the account id is below 1
+     * @param  string  $accountToken  the livesite account token (accounts.token, a uuid)
+     *
+     * @throws InvalidArgumentException when the token is not a uuid
      */
-    public static function forAccount(int $accountId, ?string $dateFrom = null, ?string $dateTo = null): static
+    public static function forAccount(string $accountToken, ?string $dateFrom = null, ?string $dateTo = null): static
     {
         return static::fromArray([
-            'accountId' => $accountId,
+            'accountToken' => $accountToken,
             'dateFrom' => $dateFrom,
             'dateTo' => $dateTo,
         ]);
@@ -60,23 +63,23 @@ class StatsRequestDTO extends DTO
     public static function forAllAccounts(?string $dateFrom = null, ?string $dateTo = null): static
     {
         return static::fromArray([
-            'accountId' => null,
+            'accountToken' => null,
             'dateFrom' => $dateFrom,
             'dateTo' => $dateTo,
         ]);
     }
 
     /**
-     * Null means all accounts.
+     * The livesite account token; null means all accounts.
      */
-    public function getAccountId(): ?int
+    public function getAccountToken(): ?string
     {
-        return $this->accountId;
+        return $this->accountToken;
     }
 
     public function isAllAccounts(): bool
     {
-        return $this->accountId === null;
+        return $this->accountToken === null;
     }
 
     public function getDateFrom(): ?string
@@ -105,15 +108,15 @@ class StatsRequestDTO extends DTO
     }
 
     /**
-     * The {account} segment of the path: the account id, or "all".
+     * The {account} segment of the path: the account token (lower case), or "all".
      */
     public function getAccountPathSegment(): string
     {
-        if ($this->accountId === null) {
+        if ($this->accountToken === null) {
             return self::ALL_ACCOUNTS;
         }
 
-        return (string) $this->accountId;
+        return strtolower($this->accountToken);
     }
 
     /**
@@ -161,24 +164,23 @@ class StatsRequestDTO extends DTO
     }
 
     /**
-     * Runs for every way of building the DTO (forAccount, fromArray, copy), so an invalid account id never reaches the
-     * path.
+     * Runs for every way of building the DTO (forAccount, fromArray, copy), so an invalid token never reaches the path.
      *
      * @param  array<array-key, mixed>  $data
      */
     protected function assertConstructDataIsValid(array $data): void
     {
-        $accountId = $data['accountId'] ?? null;
-        if ($accountId === null) {
+        $accountToken = $data['accountToken'] ?? null;
+        if ($accountToken === null) {
             return;
         }
 
-        if (! is_int($accountId)) {
-            throw new InvalidArgumentException('The account id must be an integer or null (all accounts).');
+        if (! is_string($accountToken)) {
+            throw new InvalidArgumentException('The account token must be a string (a uuid) or null (all accounts).');
         }
 
-        if ($accountId < self::MIN_ACCOUNT_ID) {
-            throw new InvalidArgumentException(sprintf('The account id must be at least %d, %d given.', self::MIN_ACCOUNT_ID, $accountId));
+        if (preg_match(self::UUID_PATTERN, $accountToken) !== 1) {
+            throw new InvalidArgumentException(sprintf('The account token must be a uuid, "%s" given.', $accountToken));
         }
     }
 }

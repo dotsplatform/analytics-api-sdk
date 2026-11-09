@@ -21,6 +21,10 @@ class TopItemDTO extends DTO
 {
     protected ?string $itemId = null;
 
+    protected ?string $name = null;
+
+    protected ?string $category = null;
+
     protected int $views;
 
     protected int $addToCart;
@@ -36,6 +40,8 @@ class TopItemDTO extends DTO
     {
         return static::fromArray([
             'itemId' => ResponseField::nullableString($data, 'item_id'),
+            'name' => ResponseField::nullableString($data, 'name'),
+            'category' => ResponseField::nullableString($data, 'category'),
             'views' => ResponseField::int($data, 'views'),
             'addToCart' => ResponseField::int($data, 'add_to_cart'),
             'deviceDays' => ResponseField::int($data, 'device_days'),
@@ -49,6 +55,22 @@ class TopItemDTO extends DTO
     public function getItemId(): ?string
     {
         return $this->itemId;
+    }
+
+    /**
+     * The livesite dish name; null while the service has not named the item yet (it reads names hourly).
+     */
+    public function getName(): ?string
+    {
+        return $this->name;
+    }
+
+    /**
+     * The livesite menu category name; null when unknown.
+     */
+    public function getCategory(): ?string
+    {
+        return $this->category;
     }
 
     public function getViews(): int

@@ -23,13 +23,15 @@ use PHPUnit\Framework\TestCase;
 
 class StatsRequestDTOTest extends TestCase
 {
-    public function testAnAccountRequestUsesTheAccountId(): void
-    {
-        $request = StatsRequestDTO::forAccount(42, '2026-11-01', '2026-11-07');
+    private const string TOKEN = '01890f3e-1b2c-7abc-9def-000000000042';
 
-        $this->assertSame(42, $request->getAccountId());
+    public function testAnAccountRequestUsesTheAccountToken(): void
+    {
+        $request = StatsRequestDTO::forAccount(strtoupper(self::TOKEN), '2026-11-01', '2026-11-07');
+
+        $this->assertSame(strtoupper(self::TOKEN), $request->getAccountToken());
         $this->assertFalse($request->isAllAccounts());
-        $this->assertSame('42', $request->getAccountPathSegment());
+        $this->assertSame(self::TOKEN, $request->getAccountPathSegment());
         $this->assertSame(['date_from' => '2026-11-01', 'date_to' => '2026-11-07'], $request->toQuery());
     }
 
@@ -37,7 +39,7 @@ class StatsRequestDTOTest extends TestCase
     {
         $request = StatsRequestDTO::forAllAccounts();
 
-        $this->assertNull($request->getAccountId());
+        $this->assertNull($request->getAccountToken());
         $this->assertTrue($request->isAllAccounts());
         $this->assertSame('all', $request->getAccountPathSegment());
         $this->assertSame([], $request->toQuery());
@@ -78,35 +80,37 @@ class StatsRequestDTOTest extends TestCase
     }
 
     /**
-     * @return iterable<string, array{int}>
+     * @return iterable<string, array{string}>
      */
-    public static function invalidAccountIds(): iterable
+    public static function invalidAccountTokens(): iterable
     {
-        yield 'zero' => [0];
-        yield 'negative' => [-5];
+        yield 'numeric id' => ['42'];
+        yield 'empty' => [''];
+        yield 'path injection' => ['../all'];
+        yield 'almost a uuid' => ['01890f3e-1b2c-7abc-9def-00000000004'];
     }
 
-    #[DataProvider('invalidAccountIds')]
-    public function testForAccountRejectsAnIdBelowOne(int $accountId): void
+    #[DataProvider('invalidAccountTokens')]
+    public function testForAccountRejectsATokenThatIsNotAUuid(string $accountToken): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('at least 1');
+        $this->expectExceptionMessage('must be a uuid');
 
-        StatsRequestDTO::forAccount($accountId);
+        StatsRequestDTO::forAccount($accountToken);
     }
 
-    public function testFromArrayAndCopyRejectAnIdBelowOne(): void
+    public function testFromArrayAndCopyRejectAnInvalidToken(): void
     {
         $exceptionsCount = 0;
 
         try {
-            StatsRequestDTO::fromArray(['accountId' => 0]);
+            StatsRequestDTO::fromArray(['accountToken' => 'abc']);
         } catch (InvalidArgumentException) {
             $exceptionsCount++;
         }
 
         try {
-            StatsRequestDTO::forAccount(1)->copy(['accountId' => -1]);
+            StatsRequestDTO::forAccount(self::TOKEN)->copy(['accountToken' => '42']);
         } catch (InvalidArgumentException) {
             $exceptionsCount++;
         }
@@ -114,18 +118,18 @@ class StatsRequestDTOTest extends TestCase
         $this->assertSame(2, $exceptionsCount);
     }
 
-    public function testAnAccountIdThatIsNotAnIntegerIsRejected(): void
+    public function testAnAccountTokenThatIsNotAStringIsRejected(): void
     {
         $this->expectException(InvalidArgumentException::class);
 
-        StatsRequestDTO::fromArray(['accountId' => '42']);
+        StatsRequestDTO::fromArray(['accountToken' => 42]);
     }
 
     public function testCopyKeepsTheOtherFields(): void
     {
-        $request = StatsRequestDTO::forAccount(5, '2026-11-01', '2026-11-07')->copy(['platform' => Platform::WEB]);
+        $request = StatsRequestDTO::forAccount(self::TOKEN, '2026-11-01', '2026-11-07')->copy(['platform' => Platform::WEB]);
 
-        $this->assertSame(5, $request->getAccountId());
+        $this->assertSame(self::TOKEN, $request->getAccountToken());
         $this->assertSame('2026-11-01', $request->getDateFrom());
         $this->assertSame(Platform::WEB, $request->getPlatform());
         $this->assertNull($request->getLimit());

@@ -21,7 +21,7 @@ use Dotsplatform\AnalyticsApi\DTO\Requests\StatsRequestDTO;
 
 final class StubResponses
 {
-    public const int ACCOUNT_ID = 291;
+    public const string ACCOUNT_TOKEN = '01890f3e-1b2c-7abc-9def-000000000291';
 
     public const string DATE_FROM = '2026-11-02';
 
@@ -106,8 +106,36 @@ final class StubResponses
         return [
             'filters' => self::filters($request),
             'items' => [
-                ['item_id' => 'pizza', 'views' => 100, 'add_to_cart' => 25, 'device_days' => 50, 'add_to_cart_rate' => 0.25],
-                ['item_id' => 'sushi', 'views' => 70, 'add_to_cart' => 0, 'device_days' => 50, 'add_to_cart_rate' => 0.0],
+                ['item_id' => '0190a1b2-0000-7000-8000-000000000001', 'name' => 'Margherita', 'category' => 'Pizza', 'views' => 100, 'add_to_cart' => 25, 'device_days' => 50, 'add_to_cart_rate' => 0.25],
+                ['item_id' => '0190a1b2-0000-7000-8000-000000000002', 'name' => null, 'category' => null, 'views' => 70, 'add_to_cart' => 0, 'device_days' => 50, 'add_to_cart_rate' => 0.0],
+            ],
+        ];
+    }
+
+    /**
+     * The second row: items the service has not named yet.
+     *
+     * @return array<string, mixed>
+     */
+    public static function topCategories(StatsRequestDTO $request): array
+    {
+        return [
+            'filters' => self::filters($request),
+            'categories' => [
+                ['category' => 'Pizza', 'category_token' => '0190a1b2-0000-7000-8000-0000000000c1', 'items' => 2, 'views' => 100, 'add_to_cart' => 25, 'device_days' => 50, 'add_to_cart_rate' => 0.25],
+                ['category' => null, 'category_token' => null, 'items' => 1, 'views' => 70, 'add_to_cart' => 0, 'device_days' => 50, 'add_to_cart_rate' => 0.0],
+            ],
+        ];
+    }
+
+    /**
+     * @return array{accounts: list<array{token: string, name: string, domain: string|null, logo_url: string|null}>}
+     */
+    public static function accounts(): array
+    {
+        return [
+            'accounts' => [
+                ['token' => self::ACCOUNT_TOKEN, 'name' => 'Stub Pizza', 'domain' => 'stub-pizza.test', 'logo_url' => 'https://assets.dots.live/misteram-public/stub-logo.webp'],
             ],
         ];
     }
@@ -147,12 +175,12 @@ final class StubResponses
     }
 
     /**
-     * @return array{account_id: int|null, date_from: string, date_to: string, platform: string|null, limit: int}
+     * @return array{account: string, date_from: string, date_to: string, platform: string|null, limit: int}
      */
     public static function filters(StatsRequestDTO $request): array
     {
         return [
-            'account_id' => $request->getAccountId(),
+            'account' => $request->getAccountPathSegment(),
             'date_from' => $request->getDateFrom() ?? self::DATE_FROM,
             'date_to' => $request->getDateTo() ?? self::DATE_TO,
             'platform' => $request->getPlatform()?->value,

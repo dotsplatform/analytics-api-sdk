@@ -14,7 +14,9 @@ declare(strict_types=1);
 namespace Dotsplatform\AnalyticsApi\Clients\Stubs\Fail;
 
 use Dotsplatform\AnalyticsApi\Contracts\StatsClient;
+use Dotsplatform\AnalyticsApi\DTO\Accounts\AccountListDTO;
 use Dotsplatform\AnalyticsApi\DTO\ActiveUsers\ActiveUsersDTO;
+use Dotsplatform\AnalyticsApi\DTO\Categories\TopCategoriesDTO;
 use Dotsplatform\AnalyticsApi\DTO\Events\EventStatsDTO;
 use Dotsplatform\AnalyticsApi\DTO\HourlyVisits\HourlyVisitsDTO;
 use Dotsplatform\AnalyticsApi\DTO\Items\TopItemsDTO;
@@ -25,6 +27,16 @@ use Dotsplatform\AnalyticsApi\DTO\Requests\StatsRequestDTO;
 
 class FailStatsStubClient implements StatsClient
 {
+    public function getAccounts(): AccountListDTO
+    {
+        throw StubFailure::make();
+    }
+
+    public function getTopCategories(StatsRequestDTO $request): TopCategoriesDTO
+    {
+        throw StubFailure::make();
+    }
+
     public function getOverview(StatsRequestDTO $request): AccountOverviewDTO
     {
         throw StubFailure::make();

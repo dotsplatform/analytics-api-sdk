@@ -9,7 +9,7 @@ declare(strict_types=1);
  * client, or a stub when config analytics-api.stub says so; tests may bind SuccessAnalyticsStubClient or
  * FailAnalyticsStubClient) and pick a group:
  *
- *     $analyticsClient->stats()->getOverview(StatsRequestDTO::forAccount($accountId, '2026-11-01', '2026-11-07'));
+ *     $analyticsClient->stats()->getOverview(StatsRequestDTO::forAccount($account->token, '2026-11-01', '2026-11-07'));
  *
  * Every call may throw an AnalyticsApiException subclass (401, 404, 422, 429, server or connection errors).
  *

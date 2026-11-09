@@ -12,7 +12,9 @@ declare(strict_types=1);
 namespace Dotsplatform\AnalyticsApi\Clients\Http;
 
 use Dotsplatform\AnalyticsApi\Contracts\StatsClient;
+use Dotsplatform\AnalyticsApi\DTO\Accounts\AccountListDTO;
 use Dotsplatform\AnalyticsApi\DTO\ActiveUsers\ActiveUsersDTO;
+use Dotsplatform\AnalyticsApi\DTO\Categories\TopCategoriesDTO;
 use Dotsplatform\AnalyticsApi\DTO\Events\EventStatsDTO;
 use Dotsplatform\AnalyticsApi\DTO\HourlyVisits\HourlyVisitsDTO;
 use Dotsplatform\AnalyticsApi\DTO\Items\TopItemsDTO;
@@ -24,6 +26,10 @@ use Dotsplatform\AnalyticsApi\Http\AnalyticsHttpTransport;
 
 class StatsHttpClient implements StatsClient
 {
+    private const string ACCOUNTS_URL = 'api/v1/accounts';
+
+    private const string CATEGORIES_URL_TEMPLATE = 'api/v1/accounts/%s/categories';
+
     private const string OVERVIEW_URL_TEMPLATE = 'api/v1/accounts/%s/overview';
 
     private const string ACTIVE_USERS_URL_TEMPLATE = 'api/v1/accounts/%s/active-users';
@@ -41,6 +47,18 @@ class StatsHttpClient implements StatsClient
     public function __construct(
         private readonly AnalyticsHttpTransport $transport,
     ) {
+    }
+
+    public function getAccounts(): AccountListDTO
+    {
+        return AccountListDTO::fromResponse($this->transport->getJson(self::ACCOUNTS_URL, []));
+    }
+
+    public function getTopCategories(StatsRequestDTO $request): TopCategoriesDTO
+    {
+        $response = $this->transport->getJson($this->buildPath(self::CATEGORIES_URL_TEMPLATE, $request), $request->toQuery());
+
+        return TopCategoriesDTO::fromResponse($response);
     }
 
     public function getOverview(StatsRequestDTO $request): AccountOverviewDTO

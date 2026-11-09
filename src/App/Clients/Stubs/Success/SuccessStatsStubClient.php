@@ -16,7 +16,9 @@ namespace Dotsplatform\AnalyticsApi\Clients\Stubs\Success;
 
 use Dotsplatform\AnalyticsApi\Clients\Stubs\StubResponses;
 use Dotsplatform\AnalyticsApi\Contracts\StatsClient;
+use Dotsplatform\AnalyticsApi\DTO\Accounts\AccountListDTO;
 use Dotsplatform\AnalyticsApi\DTO\ActiveUsers\ActiveUsersDTO;
+use Dotsplatform\AnalyticsApi\DTO\Categories\TopCategoriesDTO;
 use Dotsplatform\AnalyticsApi\DTO\Events\EventStatsDTO;
 use Dotsplatform\AnalyticsApi\DTO\HourlyVisits\HourlyVisitsDTO;
 use Dotsplatform\AnalyticsApi\DTO\Items\TopItemsDTO;
@@ -27,6 +29,16 @@ use Dotsplatform\AnalyticsApi\DTO\Requests\StatsRequestDTO;
 
 class SuccessStatsStubClient implements StatsClient
 {
+    public function getAccounts(): AccountListDTO
+    {
+        return AccountListDTO::fromResponse(StubResponses::accounts());
+    }
+
+    public function getTopCategories(StatsRequestDTO $request): TopCategoriesDTO
+    {
+        return TopCategoriesDTO::fromResponse(StubResponses::topCategories($request));
+    }
+
     public function getOverview(StatsRequestDTO $request): AccountOverviewDTO
     {
         return AccountOverviewDTO::fromResponse(StubResponses::overview($request));

@@ -31,7 +31,7 @@ class StubClientsTest extends TestCase
     public function testTheSuccessStubAnswersEveryMethod(): void
     {
         $stats = (new SuccessAnalyticsStubClient())->stats();
-        $request = StatsRequestDTO::forAccount(StubResponses::ACCOUNT_ID);
+        $request = StatsRequestDTO::forAccount(StubResponses::ACCOUNT_TOKEN);
 
         $this->assertSame(180, $stats->getOverview($request)->getTotals()->getEvents());
         $this->assertSame(12, $stats->getActiveUsers($request)->getDaily()[0]->getDau());
@@ -54,7 +54,7 @@ class StubClientsTest extends TestCase
 
         $breakdown = $stats->getPlatformBreakdown($request);
 
-        $this->assertNull($breakdown->getFilters()->getAccountId());
+        $this->assertNull($breakdown->getFilters()->getAccountToken());
         $this->assertSame('2026-10-01', $breakdown->getFilters()->getDateFrom());
         $this->assertSame('2026-10-31', $breakdown->getFilters()->getDateTo());
         $this->assertSame('android', $breakdown->getFilters()->getPlatform());
@@ -90,6 +90,6 @@ class StubClientsTest extends TestCase
         $this->expectExceptionCode(StubFailure::STATUS_CODE);
         $this->expectExceptionMessage(StubFailure::MESSAGE);
 
-        $call(new FailAnalyticsStubClient(), StatsRequestDTO::forAccount(StubResponses::ACCOUNT_ID));
+        $call(new FailAnalyticsStubClient(), StatsRequestDTO::forAccount(StubResponses::ACCOUNT_TOKEN));
     }
 }

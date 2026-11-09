@@ -67,7 +67,7 @@ class TimeoutsTest extends HttpClientTestCase
 
     private function makeRequest(): StatsRequestDTO
     {
-        return StatsRequestDTO::forAccount(StubResponses::ACCOUNT_ID);
+        return StatsRequestDTO::forAccount(StubResponses::ACCOUNT_TOKEN);
     }
 
     /**

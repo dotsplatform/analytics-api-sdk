@@ -21,7 +21,7 @@ use Dotsplatform\AnalyticsApi\Support\ResponseField;
 
 class StatsFiltersDTO extends DTO
 {
-    protected ?int $accountId = null;
+    protected ?string $accountToken = null;
 
     protected string $dateFrom;
 
@@ -37,7 +37,7 @@ class StatsFiltersDTO extends DTO
     public static function fromResponse(array $data): static
     {
         return static::fromArray([
-            'accountId' => ResponseField::nullableInt($data, 'account_id'),
+            'accountToken' => self::readAccountToken($data),
             'dateFrom' => ResponseField::string($data, 'date_from'),
             'dateTo' => ResponseField::string($data, 'date_to'),
             'platform' => ResponseField::nullableString($data, 'platform'),
@@ -46,11 +46,26 @@ class StatsFiltersDTO extends DTO
     }
 
     /**
-     * Null means all accounts.
+     * The livesite account token the request used; null means all accounts.
      */
-    public function getAccountId(): ?int
+    public function getAccountToken(): ?string
     {
-        return $this->accountId;
+        return $this->accountToken;
+    }
+
+    /**
+     * The service echoes "account": the token, or "all".
+     *
+     * @param  array<array-key, mixed>  $data
+     */
+    private static function readAccountToken(array $data): ?string
+    {
+        $account = ResponseField::nullableString($data, 'account');
+        if ($account === null || $account === 'all') {
+            return null;
+        }
+
+        return $account;
     }
 
     /**

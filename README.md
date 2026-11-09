@@ -32,9 +32,14 @@ use Dotsplatform\AnalyticsApi\DTO\Requests\StatsRequestDTO;
 
 $analyticsClient = app(AnalyticsClient::class);
 
-$overview = $analyticsClient->stats()->getOverview(StatsRequestDTO::forAccount($accountId, '2026-11-01', '2026-11-07'));
+// livesite: $account->token (accounts.token, a uuid)
+$overview = $analyticsClient->stats()->getOverview(StatsRequestDTO::forAccount($account->token, '2026-11-01', '2026-11-07'));
 $overview->getTotals()->getPurchases();
 ```
+
+**v2.0** addresses accounts by their livesite token instead of the numeric id (the service no longer accepts ids),
+adds `getAccounts()` and `getTopCategories()`, and item names and categories. Upgrading from 1.x: pass
+`$account->token` to `forAccount()` and read `getFilters()->getAccountToken()` instead of `getAccountId()`.
 
 ### The request
 
@@ -42,7 +47,7 @@ Every method takes one `StatsRequestDTO`:
 
 | Field | Query | Meaning |
 |---|---|---|
-| `accountId` | path `{account}` | An account id (1 or more; a lower id throws `InvalidArgumentException`), or `null` for all accounts (the path segment `all`; includes events with no resolved account) |
+| `accountToken` | path `{account}` | The livesite account token, a uuid (anything else throws `InvalidArgumentException`; a uuid the service does not know throws `AnalyticsNotFoundException`), or `null` for all accounts (the path segment `all`; includes events with no resolved account) |
 | `dateFrom`, `dateTo` | `date_from`, `date_to` | `Y-m-d`, both days included, at most 366 days |
 | `platform` | `platform` | `Platform` enum: `WEB`, `IOS`, `ANDROID`, `SERVER`, `UNKNOWN` |
 | `limit` | `limit` | Size of the top lists (events, platforms, items, pages), 1–500 |
@@ -60,7 +65,7 @@ $request = StatsRequestDTO::forAllAccounts('2026-10-01', '2026-10-31')->copy([
     'limit' => 10,
     'dimension' => BreakdownDimension::APP_VERSION,
 ]);
-// or StatsRequestDTO::fromArray(['accountId' => 42, 'dateFrom' => ..., 'platform' => Platform::WEB, ...])
+// or StatsRequestDTO::fromArray(['accountToken' => $account->token, 'dateFrom' => ..., 'platform' => Platform::WEB, ...])
 ```
 
 ### Methods
@@ -69,15 +74,17 @@ All are on `$analyticsClient->stats()`:
 
 | Method | Endpoint | Returns |
 |---|---|---|
+| `getAccounts()` | `GET api/v1/accounts` | `AccountListDTO`: `getAccounts()`, a list of `AccountDTO` (`getToken()`, `getName()`, `getDomain()`, `getLogoUrl()`), by name |
 | `getOverview($request)` | `overview` | `AccountOverviewDTO`: `getTotals()` (`CountersDTO`), `getPlatforms()` (list of `PlatformTotalsDTO`: platform + counters), `getDaily()` (list of `DailyTotalsDTO`: date + counters) |
 | `getActiveUsers($request)` | `active-users` | `ActiveUsersDTO`: `getDaily()`, a list of `ActiveUsersDayDTO` (`getDate()`, `getDau()`, `getWau()`, `getMau()`) |
 | `getEventStats($request)` | `events` | `EventStatsDTO`: `getEvents()`, a list of `EventStatDTO` (`getEvent()`, `getEvents()`, `getDeviceDays()`), most frequent first |
 | `getPlatformBreakdown($request)` | `platforms` | `PlatformBreakdownDTO`: `getDimension()` (`?BreakdownDimension`), `getDimensionValue()` (raw string), `getRows()`, a list of `PlatformBreakdownRowDTO` (`getValue()`, `getEvents()`, `getDeviceDays()`), most device-days first |
-| `getTopItems($request)` | `items` | `TopItemsDTO`: `getItems()`, a list of `TopItemDTO` (`getItemId()`, `getViews()`, `getAddToCart()`, `getDeviceDays()`, `getAddToCartRate()`), most viewed first |
+| `getTopItems($request)` | `items` | `TopItemsDTO`: `getItems()`, a list of `TopItemDTO` (`getItemId()` = the livesite dish token, `getName()`, `getCategory()`, `getViews()`, `getAddToCart()`, `getDeviceDays()`, `getAddToCartRate()`), most viewed first |
+| `getTopCategories($request)` | `categories` | `TopCategoriesDTO`: `getCategories()`, a list of `TopCategoryDTO` (`getCategory()`, `getCategoryToken()`, `getItems()`, `getViews()`, `getAddToCart()`, `getDeviceDays()`, `getAddToCartRate()`), most viewed first |
 | `getTopPages($request)` | `pages` | `TopPagesDTO`: `getPages()`, a list of `TopPageDTO` (`getPage()`, `getViews()`, `getDeviceDays()`), most viewed first |
 | `getHourlyVisits($request)` | `hourly-visits` | `HourlyVisitsDTO`: `getHours()` (24 `HourVisitsDTO`: `getHour()` 0–23, `getEvents()`, `getDeviceHours()`), `getWeekdays()` (7 `WeekdayVisitsDTO`: `getWeekday()` 1 = Monday … 7 = Sunday, `getEvents()`, `getDeviceHours()`) |
 
-Every response DTO also has `getFilters()` (`StatsFiltersDTO`: `getAccountId()`, `getDateFrom()`, `getDateTo()`,
+Every response DTO also has `getFilters()` (`StatsFiltersDTO`: `getAccountToken()`, `getDateFrom()`, `getDateTo()`,
 `getPlatform()`, `getLimit()`).
 
 `CountersDTO` has `getEvents()`, `getSessions()`, `getPageViews()`, `getItemViews()`, `getAddToCart()`,
@@ -94,7 +101,8 @@ Every response DTO also has `getFilters()` (`StatsFiltersDTO`: `getAccountId()`,
   `getHours()` always has 24 rows and `getWeekdays()` 7; days and hours without data have zeros.
 - **Missing values are null**: a breakdown row of devices that did not report the dimension (no OS version, no app
   version) has `getValue() === null`; likewise `EventStatDTO::getEvent()`, `TopItemDTO::getItemId()` and
-  `TopPageDTO::getPage()` return null when the events carried no value.
+  `TopPageDTO::getPage()` return null when the events carried no value. `TopItemDTO::getName()` and
+  `getCategory()` are null while the service has not named the item yet (it copies names from livesite hourly).
 - **Add-to-cart rate** is `add_to_cart / views` rounded to 4 decimals, `0.0` when there were no views.
 - Platforms and dimensions in responses are kept as **raw strings**, so a value this SDK version does not know never
   breaks a response (`PlatformBreakdownDTO::getDimension()` returns null for it). Requests take enums only.
