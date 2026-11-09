@@ -18,12 +18,19 @@ use Dotsplatform\AnalyticsApi\DTO\Accounts\AccountListDTO;
 use Dotsplatform\AnalyticsApi\DTO\ActiveUsers\ActiveUsersDTO;
 use Dotsplatform\AnalyticsApi\DTO\Categories\TopCategoriesDTO;
 use Dotsplatform\AnalyticsApi\DTO\Events\EventStatsDTO;
+use Dotsplatform\AnalyticsApi\DTO\Funnel\FunnelDTO;
+use Dotsplatform\AnalyticsApi\DTO\Heatmap\HeatmapDTO;
 use Dotsplatform\AnalyticsApi\DTO\HourlyVisits\HourlyVisitsDTO;
 use Dotsplatform\AnalyticsApi\DTO\Items\TopItemsDTO;
 use Dotsplatform\AnalyticsApi\DTO\Overview\AccountOverviewDTO;
 use Dotsplatform\AnalyticsApi\DTO\Pages\TopPagesDTO;
 use Dotsplatform\AnalyticsApi\DTO\Platforms\PlatformBreakdownDTO;
 use Dotsplatform\AnalyticsApi\DTO\Requests\StatsRequestDTO;
+use Dotsplatform\AnalyticsApi\DTO\Retention\RetentionDTO;
+use Dotsplatform\AnalyticsApi\DTO\Sources\SourcesDTO;
+use Dotsplatform\AnalyticsApi\Enums\FunnelChannel;
+use Dotsplatform\AnalyticsApi\Enums\HeatmapMetric;
+use Dotsplatform\AnalyticsApi\Enums\RetentionView;
 
 class FailStatsStubClient implements StatsClient
 {
@@ -68,6 +75,26 @@ class FailStatsStubClient implements StatsClient
     }
 
     public function getHourlyVisits(StatsRequestDTO $request): HourlyVisitsDTO
+    {
+        throw StubFailure::make();
+    }
+
+    public function getFunnel(StatsRequestDTO $request, FunnelChannel $channel = FunnelChannel::ALL): FunnelDTO
+    {
+        throw StubFailure::make();
+    }
+
+    public function getHeatmap(StatsRequestDTO $request, HeatmapMetric $metric = HeatmapMetric::SESSIONS): HeatmapDTO
+    {
+        throw StubFailure::make();
+    }
+
+    public function getSources(StatsRequestDTO $request): SourcesDTO
+    {
+        throw StubFailure::make();
+    }
+
+    public function getRetention(StatsRequestDTO $request, RetentionView $view = RetentionView::REPEAT_BUYERS): RetentionDTO
     {
         throw StubFailure::make();
     }

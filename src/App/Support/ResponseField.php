@@ -98,6 +98,118 @@ final class ResponseField
     }
 
     /**
+     * A JSON number as a float, or null. Whole numbers are accepted, like float().
+     *
+     * @param  array<array-key, mixed>  $data
+     */
+    public static function nullableFloat(array $data, string $key): ?float
+    {
+        $value = $data[$key] ?? null;
+        if ($value === null) {
+            return null;
+        }
+
+        if (is_int($value)) {
+            return (float) $value;
+        }
+
+        if (is_float($value)) {
+            return $value;
+        }
+
+        throw self::unexpectedType($key, 'number or null');
+    }
+
+    /**
+     * @param  array<array-key, mixed>  $data
+     */
+    public static function bool(array $data, string $key): bool
+    {
+        $value = $data[$key] ?? null;
+        if (! is_bool($value)) {
+            throw self::unexpectedType($key, 'boolean');
+        }
+
+        return $value;
+    }
+
+    /**
+     * @param  array<array-key, mixed>  $data
+     * @return list<string>
+     */
+    public static function listOfStrings(array $data, string $key): array
+    {
+        $strings = [];
+        foreach (self::arrayField($data, $key) as $item) {
+            if (! is_string($item)) {
+                throw self::unexpectedType($key.'[]', 'string');
+            }
+
+            $strings[] = $item;
+        }
+
+        return $strings;
+    }
+
+    /**
+     * A JSON array of numbers as floats. Whole numbers are accepted, like float().
+     *
+     * @param  array<array-key, mixed>  $data
+     * @return list<float>
+     */
+    public static function listOfFloats(array $data, string $key): array
+    {
+        $floats = [];
+        foreach (self::arrayField($data, $key) as $item) {
+            if (is_int($item)) {
+                $floats[] = (float) $item;
+
+                continue;
+            }
+
+            if (! is_float($item)) {
+                throw self::unexpectedType($key.'[]', 'number');
+            }
+
+            $floats[] = $item;
+        }
+
+        return $floats;
+    }
+
+    /**
+     * A JSON array of numbers or nulls, the numbers as floats. Whole numbers are accepted, like float().
+     *
+     * @param  array<array-key, mixed>  $data
+     * @return list<float|null>
+     */
+    public static function listOfNullableFloats(array $data, string $key): array
+    {
+        $floats = [];
+        foreach (self::arrayField($data, $key) as $item) {
+            if ($item === null) {
+                $floats[] = null;
+
+                continue;
+            }
+
+            if (is_int($item)) {
+                $floats[] = (float) $item;
+
+                continue;
+            }
+
+            if (! is_float($item)) {
+                throw self::unexpectedType($key.'[]', 'number or null');
+            }
+
+            $floats[] = $item;
+        }
+
+        return $floats;
+    }
+
+    /**
      * A JSON object as a PHP array (an empty object decodes to an empty array).
      *
      * @param  array<array-key, mixed>  $data
@@ -134,6 +246,22 @@ final class ResponseField
         }
 
         return $items;
+    }
+
+    /**
+     * The JSON array of a list field, before its items are checked.
+     *
+     * @param  array<array-key, mixed>  $data
+     * @return array<array-key, mixed>
+     */
+    private static function arrayField(array $data, string $key): array
+    {
+        $value = $data[$key] ?? null;
+        if (! is_array($value)) {
+            throw self::unexpectedType($key, 'array');
+        }
+
+        return $value;
     }
 
     private static function unexpectedType(string $key, string $expectedType): AnalyticsUnexpectedResponseException

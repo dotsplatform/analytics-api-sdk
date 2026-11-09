@@ -1,8 +1,8 @@
 # dotsplatform/analytics-api-sdk
 
 PHP SDK for the Dots **analytics** service Read API v1 (`GET api/v1/accounts/{account}/...`). The Read API answers
-from the daily MySQL rollups of the analytics service: overview, active users, events, platforms, items, pages and
-hourly visits.
+from the daily MySQL rollups of the analytics service: overview, active users, events, platforms, items, pages,
+hourly visits, the order funnel, the activity heatmap, traffic sources and retention cohorts.
 
 ## Install
 
@@ -41,6 +41,10 @@ $overview->getTotals()->getPurchases();
 adds `getAccounts()` and `getTopCategories()`, and item names and categories. Upgrading from 1.x: pass
 `$account->token` to `forAccount()` and read `getFilters()->getAccountToken()` instead of `getAccountId()`.
 
+**v2.1** adds `getFunnel()`, `getHeatmap()`, `getSources()` and `getRetention()` with the `FunnelChannel`,
+`HeatmapMetric`, `RetentionView` and `SourceKind` enums. Existing calls are unchanged; only a class of your own that
+implements `StatsClient` needs the four new methods.
+
 ### The request
 
 Every method takes one `StatsRequestDTO`:
@@ -52,6 +56,9 @@ Every method takes one `StatsRequestDTO`:
 | `platform` | `platform` | `Platform` enum: `WEB`, `IOS`, `ANDROID`, `SERVER`, `UNKNOWN` |
 | `limit` | `limit` | Size of the top lists (events, platforms, items, pages), 1–500 |
 | `dimension` | `dimension` | `BreakdownDimension` enum, sent **only** by `getPlatformBreakdown()`: `PLATFORM`, `OS`, `OS_VERSION`, `BROWSER`, `BROWSER_VERSION`, `APP_VERSION` |
+
+The funnel channel, heatmap metric and retention view are not request fields but a second argument of their
+method (`getFunnel($request, FunnelChannel::WEB)`), always sent; its default is the service default.
 
 A field left `null` is not sent, so the service default applies: the last 30 days in Kyiv time, every platform,
 limit 50 and dimension `os`. The response `getFilters()` shows the account, period, platform and limit the service used.
@@ -84,11 +91,107 @@ All are on `$analyticsClient->stats()`:
 | `getTopPages($request)` | `pages` | `TopPagesDTO`: `getPages()`, a list of `TopPageDTO` (`getPage()`, `getViews()`, `getDeviceDays()`), most viewed first |
 | `getHourlyVisits($request)` | `hourly-visits` | `HourlyVisitsDTO`: `getHours()` (24 `HourVisitsDTO`: `getHour()` 0–23, `getEvents()`, `getDeviceHours()`), `getWeekdays()` (7 `WeekdayVisitsDTO`: `getWeekday()` 1 = Monday … 7 = Sunday, `getEvents()`, `getDeviceHours()`) |
 
-Every response DTO also has `getFilters()` (`StatsFiltersDTO`: `getAccountToken()`, `getDateFrom()`, `getDateTo()`,
+| `getFunnel($request, $channel)` | `funnel?channel=` | `FunnelDTO`, see [Funnel](#funnel) |
+| `getHeatmap($request, $metric)` | `heatmap?metric=` | `HeatmapDTO`, see [Heatmap](#heatmap) |
+| `getSources($request)` | `sources` | `SourcesDTO`, see [Traffic sources](#traffic-sources) |
+| `getRetention($request, $view)` | `retention?view=` | `RetentionDTO`, see [Retention](#retention) |
+
+Every response DTO except `RetentionDTO` also has `getFilters()` (`StatsFiltersDTO`: `getAccountToken()`, `getDateFrom()`, `getDateTo()`,
 `getPlatform()`, `getLimit()`).
 
 `CountersDTO` has `getEvents()`, `getSessions()`, `getPageViews()`, `getItemViews()`, `getAddToCart()`,
 `getCheckouts()`, `getPurchases()` and `getDeviceDays()`.
+
+### Funnel
+
+```php
+use Dotsplatform\AnalyticsApi\Enums\FunnelChannel;
+
+$funnel = $analyticsClient->stats()->getFunnel($request);                          // FunnelChannel::ALL
+$appsFunnel = $analyticsClient->stats()->getFunnel($request, FunnelChannel::APPS); // ALL, WEB, APPS, IOS, ANDROID
+
+foreach ($funnel->getSteps() as $step) {
+    echo $step->getKey(), ' ', $step->getSessions(), ' ', $step->getPercentOfStart() ?? '–';
+}
+$funnel->getTracking()->getCoveragePercent(); // null unless FunnelChannel::ALL
+$funnel->getRevenue()->getAverageOrderCents(); // null when there were no orders
+```
+
+`FunnelDTO`: `getChannel()` (`?FunnelChannel`), `getChannelValue()`, `getSteps()` and `getCheckoutSteps()` (lists of
+`FunnelStepDTO`), `getOrders()`, `getTracking()`, `getRevenue()`.
+
+- `FunnelStepDTO`: `getKey()`, `getLabel()` (English), `getSessions()`, `getPercentOfPrevious()`, `getPercentOfStart()`
+  (both `?float`), `isOptional()`. Step keys in order: `sessions`, `company_lists` (only when the account sends it),
+  `menus`, `item_views` (optional: people can add to cart from the menu), `add_to_cart`, `cart_views`, `checkouts`,
+  `orders`. Checkout step keys: `checkouts`, `verification_shown`, `sms_sent`, `captchas`, `payment_info`, `orders`;
+  their percent of the previous step is always null and the percent of start is the percent of checkouts.
+- `FunnelOrdersDTO`: `getTracked()`, `getOutcomes()` and `getCancelReasons()` (lists of `OrderOutcomeDTO`: `getKey()`,
+  `getLabel()`, `getOrders()`, `getPercentOfOrders()`). Outcome keys: `completed`, `cancelled` (always), `in_progress`,
+  `not_in_livesite` (only when not zero). A cancel reason key is the livesite `orders.declineReasonType` as a string
+  (`"1"`..`"13"`) or `"none"`, most orders first.
+- `FunnelTrackingDTO`: `getLivesiteOrders()`, `getMatchedOrders()`, `getCoveragePercent()`, all null unless the channel
+  is `ALL` (livesite cannot tell the channel of an order).
+- `FunnelRevenueDTO`: `getTrackedCents()`, `getCompletedCents()`, `getAverageOrderCents()`, in cents of the account
+  currency.
+
+### Heatmap
+
+```php
+use Dotsplatform\AnalyticsApi\Enums\HeatmapMetric;
+
+$heatmap = $analyticsClient->stats()->getHeatmap($request, HeatmapMetric::ORDERS); // SESSIONS (default), ORDERS, CONVERSION
+
+foreach ($heatmap->getWeekdays() as $weekdayRow) {
+    $mondayEvening = $weekdayRow->getHours()[19]; // float; the index is the Kyiv hour
+}
+$heatmap->getMaxValue(); // the largest cell, to scale the colours
+```
+
+`HeatmapDTO`: `getMetric()` (`?HeatmapMetric`), `getMetricValue()`, `getMaxValue()`, `getWeekdays()`: always 7
+`HeatmapWeekdayDTO` (`getWeekday()` 1 = Monday … 7 = Sunday, `getHours()` 24 floats). `SESSIONS` and `ORDERS` are the
+average per day of that weekday in the period; `CONVERSION` is the percent of sessions with an order.
+
+### Traffic sources
+
+```php
+use Dotsplatform\AnalyticsApi\DTO\Sources\SourceDTO;
+use Dotsplatform\AnalyticsApi\Enums\SourceKind;
+
+$sources = $analyticsClient->stats()->getSources($request);
+foreach ($sources->getSources() as $source) {
+    $isPaid = $source->getKind() === SourceKind::PAID;
+    $isDirect = $source->getName() === SourceDTO::NAME_DIRECT;
+}
+```
+
+`SourcesDTO`: `getTotalSessions()`, `getSources()` (list of `SourceDTO`: `getName()`, `getKind()` (`?SourceKind`:
+`APP`, `PAID`, `CAMPAIGN`, `SEARCH`, `SOCIAL`, `AI`, `REFERRAL`, `DIRECT`), `getKindValue()`, `getSessions()`,
+`getOrderingSessions()`, `getConversionPercent()`), `getCampaigns()` (at most 10 `CampaignDTO`: `getName()` = the
+utm_campaign, `getSourceName()` = the name of its source, `getSessions()`, `getOrderingSessions()`,
+`getConversionPercent()`). Source names are network names or domains, except `SourceDTO::NAME_DIRECT` ("Direct"),
+`NAME_BACK_FROM_PAYMENT` ("Back from payment"), `NAME_APP_IOS` ("App (iOS)") and `NAME_APP_ANDROID` ("App (Android)"):
+translate those. The conversion percent is null when there were no sessions.
+
+### Retention
+
+```php
+use Dotsplatform\AnalyticsApi\Enums\RetentionView;
+
+$retention = $analyticsClient->stats()->getRetention($request); // RetentionView::REPEAT_BUYERS
+$devices = $analyticsClient->stats()->getRetention($request, RetentionView::DEVICES_RETURNING);
+
+foreach ($retention->getCohorts() as $cohort) {
+    $cohort->getStartDate(); // '2026-09-01'
+    $cohort->getPercents();  // one ?float per offset; null = that period has not happened yet
+}
+```
+
+`RetentionDTO`: `getAccountToken()` (null = all accounts; there is no `getFilters()`), `getView()`
+(`?RetentionView`: `REPEAT_BUYERS`, `DEVICES_RETURNING`, `DEVICES_ORDERING`), `getViewValue()`, `getPeriod()`
+(`RetentionDTO::PERIOD_MONTH` for repeat buyers, `PERIOD_WEEK` for the device views), `getOffsets()` (`"M1"`, `"M2"`, …
+or `"W1"`..`"W8"`), `getCohorts()`, oldest first: `RetentionCohortDTO` (`getStartDate()`, `getLabel()` in English,
+`getSize()`, `getPercents()`, `isMixed()` = the first period of the data, which also holds earlier customers).
+Retention ignores the request dates; the platform applies to the device views only.
 
 ### Reading the numbers
 
@@ -104,8 +207,13 @@ Every response DTO also has `getFilters()` (`StatsFiltersDTO`: `getAccountToken(
   `TopPageDTO::getPage()` return null when the events carried no value. `TopItemDTO::getName()` and
   `getCategory()` are null while the service has not named the item yet (it copies names from livesite hourly).
 - **Add-to-cart rate** is `add_to_cart / views` rounded to 4 decimals, `0.0` when there were no views.
-- Platforms and dimensions in responses are kept as **raw strings**, so a value this SDK version does not know never
-  breaks a response (`PlatformBreakdownDTO::getDimension()` returns null for it). Requests take enums only.
+- Platforms, dimensions, funnel channels, heatmap metrics, retention views and source kinds in responses are kept as
+  **raw strings**, so a value this SDK version does not know never breaks a response (the enum getters, e.g.
+  `PlatformBreakdownDTO::getDimension()` or `SourceDTO::getKind()`, return null for it; the `...Value()` getters
+  return the raw string). Requests take enums only.
+- **Percents** (funnel, sources, retention, heatmap conversion) are 0–100 and null when there is nothing to divide
+  by. Funnel and sources percents are not rounded (round them for display); heatmap and retention values are rounded
+  to 2 decimals. The add-to-cart rate is the exception: a 0–1 ratio.
 
 ## Errors
 

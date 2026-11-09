@@ -16,12 +16,19 @@ use Dotsplatform\AnalyticsApi\DTO\Accounts\AccountListDTO;
 use Dotsplatform\AnalyticsApi\DTO\ActiveUsers\ActiveUsersDTO;
 use Dotsplatform\AnalyticsApi\DTO\Categories\TopCategoriesDTO;
 use Dotsplatform\AnalyticsApi\DTO\Events\EventStatsDTO;
+use Dotsplatform\AnalyticsApi\DTO\Funnel\FunnelDTO;
+use Dotsplatform\AnalyticsApi\DTO\Heatmap\HeatmapDTO;
 use Dotsplatform\AnalyticsApi\DTO\HourlyVisits\HourlyVisitsDTO;
 use Dotsplatform\AnalyticsApi\DTO\Items\TopItemsDTO;
 use Dotsplatform\AnalyticsApi\DTO\Overview\AccountOverviewDTO;
 use Dotsplatform\AnalyticsApi\DTO\Pages\TopPagesDTO;
 use Dotsplatform\AnalyticsApi\DTO\Platforms\PlatformBreakdownDTO;
 use Dotsplatform\AnalyticsApi\DTO\Requests\StatsRequestDTO;
+use Dotsplatform\AnalyticsApi\DTO\Retention\RetentionDTO;
+use Dotsplatform\AnalyticsApi\DTO\Sources\SourcesDTO;
+use Dotsplatform\AnalyticsApi\Enums\FunnelChannel;
+use Dotsplatform\AnalyticsApi\Enums\HeatmapMetric;
+use Dotsplatform\AnalyticsApi\Enums\RetentionView;
 use Dotsplatform\AnalyticsApi\Http\AnalyticsHttpTransport;
 
 class StatsHttpClient implements StatsClient
@@ -43,6 +50,14 @@ class StatsHttpClient implements StatsClient
     private const string PAGES_URL_TEMPLATE = 'api/v1/accounts/%s/pages';
 
     private const string HOURLY_VISITS_URL_TEMPLATE = 'api/v1/accounts/%s/hourly-visits';
+
+    private const string FUNNEL_URL_TEMPLATE = 'api/v1/accounts/%s/funnel';
+
+    private const string HEATMAP_URL_TEMPLATE = 'api/v1/accounts/%s/heatmap';
+
+    private const string SOURCES_URL_TEMPLATE = 'api/v1/accounts/%s/sources';
+
+    private const string RETENTION_URL_TEMPLATE = 'api/v1/accounts/%s/retention';
 
     public function __construct(
         private readonly AnalyticsHttpTransport $transport,
@@ -108,6 +123,43 @@ class StatsHttpClient implements StatsClient
         $response = $this->transport->getJson($this->buildPath(self::HOURLY_VISITS_URL_TEMPLATE, $request), $request->toQuery());
 
         return HourlyVisitsDTO::fromResponse($response);
+    }
+
+    public function getFunnel(StatsRequestDTO $request, FunnelChannel $channel = FunnelChannel::ALL): FunnelDTO
+    {
+        $query = $request->toQuery();
+        $query['channel'] = $channel->value;
+
+        $response = $this->transport->getJson($this->buildPath(self::FUNNEL_URL_TEMPLATE, $request), $query);
+
+        return FunnelDTO::fromResponse($response);
+    }
+
+    public function getHeatmap(StatsRequestDTO $request, HeatmapMetric $metric = HeatmapMetric::SESSIONS): HeatmapDTO
+    {
+        $query = $request->toQuery();
+        $query['metric'] = $metric->value;
+
+        $response = $this->transport->getJson($this->buildPath(self::HEATMAP_URL_TEMPLATE, $request), $query);
+
+        return HeatmapDTO::fromResponse($response);
+    }
+
+    public function getSources(StatsRequestDTO $request): SourcesDTO
+    {
+        $response = $this->transport->getJson($this->buildPath(self::SOURCES_URL_TEMPLATE, $request), $request->toQuery());
+
+        return SourcesDTO::fromResponse($response);
+    }
+
+    public function getRetention(StatsRequestDTO $request, RetentionView $view = RetentionView::REPEAT_BUYERS): RetentionDTO
+    {
+        $query = $request->toQuery();
+        $query['view'] = $view->value;
+
+        $response = $this->transport->getJson($this->buildPath(self::RETENTION_URL_TEMPLATE, $request), $query);
+
+        return RetentionDTO::fromResponse($response);
     }
 
     private function buildPath(string $template, StatsRequestDTO $request): string

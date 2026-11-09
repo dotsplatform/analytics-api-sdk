@@ -18,6 +18,9 @@ namespace Dotsplatform\AnalyticsApi\Clients\Stubs;
 
 use DateTimeImmutable;
 use Dotsplatform\AnalyticsApi\DTO\Requests\StatsRequestDTO;
+use Dotsplatform\AnalyticsApi\Enums\FunnelChannel;
+use Dotsplatform\AnalyticsApi\Enums\HeatmapMetric;
+use Dotsplatform\AnalyticsApi\Enums\RetentionView;
 
 final class StubResponses
 {
@@ -32,6 +35,8 @@ final class StubResponses
     public const int DEFAULT_LIMIT = 50;
 
     private const int HOURS_IN_DAY = 24;
+
+    private const int DAYS_IN_WEEK = 7;
 
     private const int MAX_DAYS = 366;
 
@@ -175,6 +180,124 @@ final class StubResponses
     }
 
     /**
+     * Item views (the dish card) are optional: people can add to cart straight from the menu.
+     * The tracking numbers are null unless the channel is "all", like the service.
+     *
+     * @return array<string, mixed>
+     */
+    public static function funnel(StatsRequestDTO $request, FunnelChannel $channel = FunnelChannel::ALL): array
+    {
+        return [
+            'filters' => self::filters($request),
+            'channel' => $channel->value,
+            'steps' => [
+                self::funnelStep('sessions', 'Visit', 150, null, 100.0, false),
+                self::funnelStep('menus', 'Company menu', 120, 80.0, 80.0, false),
+                self::funnelStep('item_views', 'Dish card', 60, 50.0, 40.0, true),
+                self::funnelStep('add_to_cart', 'Added to cart', 45, 75.0, 30.0, false),
+                self::funnelStep('cart_views', 'Cart opened', 40, 88.89, 26.67, false),
+                self::funnelStep('checkouts', 'Checkout', 30, 75.0, 20.0, false),
+                self::funnelStep('orders', 'Order placed', 2, 6.67, 1.33, false),
+            ],
+            'checkout_steps' => [
+                self::funnelStep('checkouts', 'Checkout opened', 30, null, 100.0, false),
+                self::funnelStep('verification_shown', 'Phone verification shown', 12, null, 40.0, false),
+                self::funnelStep('sms_sent', 'SMS code sent', 10, null, 33.33, false),
+                self::funnelStep('captchas', 'Captcha shown', 0, null, 0.0, false),
+                self::funnelStep('payment_info', 'Payment details entered', 4, null, 13.33, false),
+                self::funnelStep('orders', 'Order placed', 2, null, 6.67, false),
+            ],
+            'orders' => [
+                'tracked' => 2,
+                'outcomes' => [
+                    ['key' => 'completed', 'label' => 'Completed', 'orders' => 1, 'percent_of_orders' => 50.0],
+                    ['key' => 'cancelled', 'label' => 'Cancelled', 'orders' => 1, 'percent_of_orders' => 50.0],
+                ],
+                'cancel_reasons' => [
+                    ['key' => '9', 'label' => 'Not accepted in time', 'orders' => 1, 'percent_of_orders' => 100.0],
+                ],
+            ],
+            'tracking' => self::funnelTracking($channel),
+            'revenue' => ['tracked_cents' => 40000, 'completed_cents' => 30000, 'average_order_cents' => 20000],
+        ];
+    }
+
+    /**
+     * Activity on Monday at lunch and every evening; the other cells are zero.
+     *
+     * @return array<string, mixed>
+     */
+    public static function heatmap(StatsRequestDTO $request, HeatmapMetric $metric = HeatmapMetric::SESSIONS): array
+    {
+        $weekdays = [];
+        for ($weekday = 1; $weekday <= self::DAYS_IN_WEEK; $weekday++) {
+            $weekdays[] = ['weekday' => $weekday, 'hours' => self::heatmapHours($weekday)];
+        }
+
+        return [
+            'filters' => self::filters($request),
+            'metric' => $metric->value,
+            'max_value' => 2.0,
+            'weekdays' => $weekdays,
+        ];
+    }
+
+    /**
+     * The last source had sessions but no orders.
+     *
+     * @return array<string, mixed>
+     */
+    public static function sources(StatsRequestDTO $request): array
+    {
+        return [
+            'filters' => self::filters($request),
+            'total_sessions' => 50,
+            'sources' => [
+                ['name' => 'Instagram', 'kind' => 'paid', 'sessions' => 40, 'ordering_sessions' => 4, 'conversion_percent' => 10.0],
+                ['name' => 'Direct', 'kind' => 'direct', 'sessions' => 8, 'ordering_sessions' => 1, 'conversion_percent' => 12.5],
+                ['name' => 'App (iOS)', 'kind' => 'app', 'sessions' => 2, 'ordering_sessions' => 0, 'conversion_percent' => 0.0],
+            ],
+            'campaigns' => [
+                ['name' => 'autumn', 'kind' => 'Instagram', 'sessions' => 40, 'ordering_sessions' => 4, 'conversion_percent' => 10.0],
+            ],
+        ];
+    }
+
+    /**
+     * Repeat buyers: monthly cohorts with offsets M1–M3. The device views: weekly cohorts with offsets W1–W8.
+     * The oldest cohort is mixed; null percents are periods that have not happened yet.
+     *
+     * @return array<string, mixed>
+     */
+    public static function retention(StatsRequestDTO $request, RetentionView $view = RetentionView::REPEAT_BUYERS): array
+    {
+        if ($view === RetentionView::REPEAT_BUYERS) {
+            return [
+                'account' => $request->getAccountPathSegment(),
+                'view' => $view->value,
+                'period' => 'month',
+                'offsets' => ['M1', 'M2', 'M3'],
+                'cohorts' => [
+                    ['start_date' => '2026-08-01', 'label' => 'August 2026', 'size' => 80, 'percents' => [25.0, 18.75, null], 'is_mixed' => true],
+                    ['start_date' => '2026-09-01', 'label' => 'September 2026', 'size' => 50, 'percents' => [20.0, null, null], 'is_mixed' => false],
+                    ['start_date' => '2026-10-01', 'label' => 'October 2026', 'size' => 40, 'percents' => [null, null, null], 'is_mixed' => false],
+                ],
+            ];
+        }
+
+        return [
+            'account' => $request->getAccountPathSegment(),
+            'view' => $view->value,
+            'period' => 'week',
+            'offsets' => ['W1', 'W2', 'W3', 'W4', 'W5', 'W6', 'W7', 'W8'],
+            'cohorts' => [
+                ['start_date' => '2026-10-19', 'label' => 'Week of 19 Oct', 'size' => 120, 'percents' => [30.0, 22.5, null, null, null, null, null, null], 'is_mixed' => true],
+                ['start_date' => '2026-10-26', 'label' => 'Week of 26 Oct', 'size' => 90, 'percents' => [28.89, null, null, null, null, null, null, null], 'is_mixed' => false],
+            ],
+        ];
+    }
+
+    /**
      * @return array{account: string, date_from: string, date_to: string, platform: string|null, limit: int}
      */
     public static function filters(StatsRequestDTO $request): array
@@ -256,6 +379,50 @@ final class StubResponses
 
         $hours[12] = ['hour' => 12, 'events' => 7, 'device_hours' => 3];
         $hours[19] = ['hour' => 19, 'events' => 25, 'device_hours' => 8];
+
+        return $hours;
+    }
+
+    /**
+     * @return array{key: string, label: string, sessions: int, percent_of_previous: float|null, percent_of_start: float|null, optional: bool}
+     */
+    private static function funnelStep(string $key, string $label, int $sessions, ?float $percentOfPrevious, ?float $percentOfStart, bool $optional): array
+    {
+        return [
+            'key' => $key,
+            'label' => $label,
+            'sessions' => $sessions,
+            'percent_of_previous' => $percentOfPrevious,
+            'percent_of_start' => $percentOfStart,
+            'optional' => $optional,
+        ];
+    }
+
+    /**
+     * @return array{livesite_orders: int|null, matched_orders: int|null, coverage_percent: float|null}
+     */
+    private static function funnelTracking(FunnelChannel $channel): array
+    {
+        if ($channel !== FunnelChannel::ALL) {
+            return ['livesite_orders' => null, 'matched_orders' => null, 'coverage_percent' => null];
+        }
+
+        return ['livesite_orders' => 3, 'matched_orders' => 2, 'coverage_percent' => 66.67];
+    }
+
+    /**
+     * Always 24 values.
+     *
+     * @return list<float>
+     */
+    private static function heatmapHours(int $weekday): array
+    {
+        $hours = array_fill(0, self::HOURS_IN_DAY, 0.0);
+        $hours[19] = 1.5;
+        if ($weekday === 1) {
+            $hours[12] = 0.5;
+            $hours[19] = 2.0;
+        }
 
         return $hours;
     }
