@@ -41,6 +41,9 @@ $overview->getTotals()->getPurchases();
 adds `getAccounts()` and `getTopCategories()`, and item names and categories. Upgrading from 1.x: pass
 `$account->token` to `forAccount()` and read `getFilters()->getAccountToken()` instead of `getAccountId()`.
 
+**v2.2** adds `getDevices()`: the top device models (iPhone identifiers with a readable label), OS versions, browsers
+and app versions of the period.
+
 **v2.1** adds `getFunnel()`, `getHeatmap()`, `getSources()` and `getRetention()` with the `FunnelChannel`,
 `HeatmapMetric`, `RetentionView` and `SourceKind` enums. Existing calls are unchanged; only a class of your own that
 implements `StatsClient` needs the four new methods.

@@ -409,6 +409,25 @@ class StatsHttpClientTest extends HttpClientTestCase
         $this->assertSame([0.0, 50.0, 12.5], $heatmap->getWeekdays()[0]->getHours());
     }
 
+    public function testReadsDevicesAndVersions(): void
+    {
+        $request = $this->makeRequest();
+        $this->queueJsonResponse(StubResponses::devices($request));
+
+        $devices = $this->makeClient()->stats()->getDevices($request);
+
+        $this->assertLastRequest('GET', self::ACCOUNT_PATH.'devices');
+        $this->assertFalse($devices->isEmpty());
+        $this->assertSame('iPhone17,2', $devices->getDeviceModels()[0]->getValue());
+        $this->assertSame('iPhone 16 Pro Max', $devices->getDeviceModels()[0]->getLabel());
+        $this->assertSame(75.0, $devices->getDeviceModels()[0]->getSharePercent());
+        $this->assertSame('ios,web', $devices->getOsVersions()[0]->getPlatform());
+        $this->assertSame(80, $devices->getOsVersions()[0]->getDevices());
+        $this->assertSame('Chrome 141', $devices->getBrowsers()[0]->getLabel());
+        $this->assertSame(48, $devices->getAppVersions()[0]->getSessions());
+        $this->assertCount(2, $devices->getAppVersions());
+    }
+
     public function testReadsSourcesAndCampaigns(): void
     {
         $request = $this->makeRequest()->copy(['platform' => Platform::WEB]);

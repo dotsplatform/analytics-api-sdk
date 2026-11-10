@@ -18,6 +18,7 @@ namespace Dotsplatform\AnalyticsApi\Contracts;
 use Dotsplatform\AnalyticsApi\DTO\Accounts\AccountListDTO;
 use Dotsplatform\AnalyticsApi\DTO\ActiveUsers\ActiveUsersDTO;
 use Dotsplatform\AnalyticsApi\DTO\Categories\TopCategoriesDTO;
+use Dotsplatform\AnalyticsApi\DTO\Devices\DevicesDTO;
 use Dotsplatform\AnalyticsApi\DTO\Events\EventStatsDTO;
 use Dotsplatform\AnalyticsApi\DTO\Funnel\FunnelDTO;
 use Dotsplatform\AnalyticsApi\DTO\Heatmap\HeatmapDTO;
@@ -96,6 +97,11 @@ interface StatsClient
      * The request limit is not used.
      */
     public function getSources(StatsRequestDTO $request): SourcesDTO;
+
+    /**
+     * GET devices: the top 10 device models, OS versions, browsers and app versions. The request limit is not used.
+     */
+    public function getDevices(StatsRequestDTO $request): DevicesDTO;
 
     /**
      * GET retention: a cohort table of the view. The request period and limit are not used; the platform applies

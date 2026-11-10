@@ -15,6 +15,7 @@ use Dotsplatform\AnalyticsApi\Contracts\StatsClient;
 use Dotsplatform\AnalyticsApi\DTO\Accounts\AccountListDTO;
 use Dotsplatform\AnalyticsApi\DTO\ActiveUsers\ActiveUsersDTO;
 use Dotsplatform\AnalyticsApi\DTO\Categories\TopCategoriesDTO;
+use Dotsplatform\AnalyticsApi\DTO\Devices\DevicesDTO;
 use Dotsplatform\AnalyticsApi\DTO\Events\EventStatsDTO;
 use Dotsplatform\AnalyticsApi\DTO\Funnel\FunnelDTO;
 use Dotsplatform\AnalyticsApi\DTO\Heatmap\HeatmapDTO;
@@ -56,6 +57,8 @@ class StatsHttpClient implements StatsClient
     private const string HEATMAP_URL_TEMPLATE = 'api/v1/accounts/%s/heatmap';
 
     private const string SOURCES_URL_TEMPLATE = 'api/v1/accounts/%s/sources';
+
+    private const string DEVICES_URL_TEMPLATE = 'api/v1/accounts/%s/devices';
 
     private const string RETENTION_URL_TEMPLATE = 'api/v1/accounts/%s/retention';
 
@@ -150,6 +153,13 @@ class StatsHttpClient implements StatsClient
         $response = $this->transport->getJson($this->buildPath(self::SOURCES_URL_TEMPLATE, $request), $request->toQuery());
 
         return SourcesDTO::fromResponse($response);
+    }
+
+    public function getDevices(StatsRequestDTO $request): DevicesDTO
+    {
+        $response = $this->transport->getJson($this->buildPath(self::DEVICES_URL_TEMPLATE, $request), $request->toQuery());
+
+        return DevicesDTO::fromResponse($response);
     }
 
     public function getRetention(StatsRequestDTO $request, RetentionView $view = RetentionView::REPEAT_BUYERS): RetentionDTO

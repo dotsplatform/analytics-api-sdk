@@ -264,6 +264,35 @@ final class StubResponses
     }
 
     /**
+     * Devices: two iPhone models (one named), OS versions merged over platforms, one browser, app versions per platform.
+     *
+     * @return array<string, mixed>
+     */
+    public static function devices(StatsRequestDTO $request): array
+    {
+        return [
+            'filters' => self::filters($request),
+            'dimensions' => [
+                'device_model' => [
+                    ['value' => 'iPhone17,2', 'label' => 'iPhone 16 Pro Max', 'platform' => 'ios', 'devices' => 30, 'sessions' => 60, 'share_percent' => 75.0],
+                    ['value' => 'SM-S918B', 'label' => 'SM-S918B', 'platform' => 'android', 'devices' => 10, 'sessions' => 20, 'share_percent' => 25.0],
+                ],
+                'os_version' => [
+                    ['value' => 'iOS 18', 'label' => 'iOS 18', 'platform' => 'ios,web', 'devices' => 80, 'sessions' => 160, 'share_percent' => 80.0],
+                    ['value' => 'Windows 10', 'label' => 'Windows 10', 'platform' => 'web', 'devices' => 20, 'sessions' => 40, 'share_percent' => 20.0],
+                ],
+                'browser' => [
+                    ['value' => 'Chrome 141', 'label' => 'Chrome 141', 'platform' => 'web', 'devices' => 20, 'sessions' => 40, 'share_percent' => 100.0],
+                ],
+                'app_version' => [
+                    ['value' => '5.10.1', 'label' => '5.10.1', 'platform' => 'ios', 'devices' => 24, 'sessions' => 48, 'share_percent' => 80.0],
+                    ['value' => '5.6.2', 'label' => '5.6.2', 'platform' => 'ios', 'devices' => 6, 'sessions' => 12, 'share_percent' => 20.0],
+                ],
+            ],
+        ];
+    }
+
+    /**
      * Repeat buyers: monthly cohorts with offsets M1–M3. The device views: weekly cohorts with offsets W1–W8.
      * The oldest cohort is mixed; null percents are periods that have not happened yet.
      *
