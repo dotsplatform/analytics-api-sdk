@@ -293,6 +293,32 @@ final class StubResponses
     }
 
     /**
+     * Installs: iOS and Android over two days, 10 installs in the period before.
+     *
+     * @return array<string, mixed>
+     */
+    public static function installs(StatsRequestDTO $request): array
+    {
+        return [
+            'filters' => self::filters($request),
+            'installs' => [
+                'installs' => 24,
+                'updates' => 30,
+                'previous_installs' => 10,
+                'previous_updates' => 0,
+                'platforms' => [
+                    ['platform' => 'android', 'installs' => 8, 'updates' => 0],
+                    ['platform' => 'ios', 'installs' => 16, 'updates' => 30],
+                ],
+                'days' => [
+                    ['date' => '2026-11-10', 'installs' => 20, 'updates' => 0],
+                    ['date' => '2026-11-11', 'installs' => 4, 'updates' => 30],
+                ],
+            ],
+        ];
+    }
+
+    /**
      * Repeat buyers: monthly cohorts with offsets M1–M3. The device views: weekly cohorts with offsets W1–W8.
      * The oldest cohort is mixed; null percents are periods that have not happened yet.
      *

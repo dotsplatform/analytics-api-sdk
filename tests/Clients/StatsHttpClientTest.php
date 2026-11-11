@@ -409,6 +409,24 @@ class StatsHttpClientTest extends HttpClientTestCase
         $this->assertSame([0.0, 50.0, 12.5], $heatmap->getWeekdays()[0]->getHours());
     }
 
+    public function testReadsAppInstalls(): void
+    {
+        $request = $this->makeRequest();
+        $this->queueJsonResponse(StubResponses::installs($request));
+
+        $installs = $this->makeClient()->stats()->getInstalls($request);
+
+        $this->assertLastRequest('GET', self::ACCOUNT_PATH.'installs');
+        $this->assertFalse($installs->isEmpty());
+        $this->assertSame(24, $installs->getInstalls());
+        $this->assertSame(30, $installs->getUpdates());
+        $this->assertSame(10, $installs->getPreviousInstalls());
+        $this->assertSame('ios', $installs->getPlatforms()[1]->getKey());
+        $this->assertSame(16, $installs->getPlatforms()[1]->getInstalls());
+        $this->assertSame('2026-11-11', $installs->getDays()[1]->getKey());
+        $this->assertSame(30, $installs->getDays()[1]->getUpdates());
+    }
+
     public function testReadsDevicesAndVersions(): void
     {
         $request = $this->makeRequest();

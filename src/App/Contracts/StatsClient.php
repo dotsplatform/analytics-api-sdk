@@ -23,6 +23,7 @@ use Dotsplatform\AnalyticsApi\DTO\Events\EventStatsDTO;
 use Dotsplatform\AnalyticsApi\DTO\Funnel\FunnelDTO;
 use Dotsplatform\AnalyticsApi\DTO\Heatmap\HeatmapDTO;
 use Dotsplatform\AnalyticsApi\DTO\HourlyVisits\HourlyVisitsDTO;
+use Dotsplatform\AnalyticsApi\DTO\Installs\AppInstallsDTO;
 use Dotsplatform\AnalyticsApi\DTO\Items\TopItemsDTO;
 use Dotsplatform\AnalyticsApi\DTO\Overview\AccountOverviewDTO;
 use Dotsplatform\AnalyticsApi\DTO\Pages\TopPagesDTO;
@@ -102,6 +103,12 @@ interface StatsClient
      * GET devices: the top 10 device models, OS versions, browsers and app versions. The request limit is not used.
      */
     public function getDevices(StatsRequestDTO $request): DevicesDTO;
+
+    /**
+     * GET installs: app installs and updates per platform and day, with the totals of the period before.
+     * The request limit is not used.
+     */
+    public function getInstalls(StatsRequestDTO $request): AppInstallsDTO;
 
     /**
      * GET retention: a cohort table of the view. The request period and limit are not used; the platform applies

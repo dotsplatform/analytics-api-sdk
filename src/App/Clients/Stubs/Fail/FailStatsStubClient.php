@@ -22,6 +22,7 @@ use Dotsplatform\AnalyticsApi\DTO\Events\EventStatsDTO;
 use Dotsplatform\AnalyticsApi\DTO\Funnel\FunnelDTO;
 use Dotsplatform\AnalyticsApi\DTO\Heatmap\HeatmapDTO;
 use Dotsplatform\AnalyticsApi\DTO\HourlyVisits\HourlyVisitsDTO;
+use Dotsplatform\AnalyticsApi\DTO\Installs\AppInstallsDTO;
 use Dotsplatform\AnalyticsApi\DTO\Items\TopItemsDTO;
 use Dotsplatform\AnalyticsApi\DTO\Overview\AccountOverviewDTO;
 use Dotsplatform\AnalyticsApi\DTO\Pages\TopPagesDTO;
@@ -96,6 +97,11 @@ class FailStatsStubClient implements StatsClient
     }
 
     public function getDevices(StatsRequestDTO $request): DevicesDTO
+    {
+        throw StubFailure::make();
+    }
+
+    public function getInstalls(StatsRequestDTO $request): AppInstallsDTO
     {
         throw StubFailure::make();
     }

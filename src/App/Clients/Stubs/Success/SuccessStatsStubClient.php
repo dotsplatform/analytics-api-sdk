@@ -24,6 +24,7 @@ use Dotsplatform\AnalyticsApi\DTO\Events\EventStatsDTO;
 use Dotsplatform\AnalyticsApi\DTO\Funnel\FunnelDTO;
 use Dotsplatform\AnalyticsApi\DTO\Heatmap\HeatmapDTO;
 use Dotsplatform\AnalyticsApi\DTO\HourlyVisits\HourlyVisitsDTO;
+use Dotsplatform\AnalyticsApi\DTO\Installs\AppInstallsDTO;
 use Dotsplatform\AnalyticsApi\DTO\Items\TopItemsDTO;
 use Dotsplatform\AnalyticsApi\DTO\Overview\AccountOverviewDTO;
 use Dotsplatform\AnalyticsApi\DTO\Pages\TopPagesDTO;
@@ -100,6 +101,11 @@ class SuccessStatsStubClient implements StatsClient
     public function getDevices(StatsRequestDTO $request): DevicesDTO
     {
         return DevicesDTO::fromResponse(StubResponses::devices($request));
+    }
+
+    public function getInstalls(StatsRequestDTO $request): AppInstallsDTO
+    {
+        return AppInstallsDTO::fromResponse(StubResponses::installs($request));
     }
 
     public function getRetention(StatsRequestDTO $request, RetentionView $view = RetentionView::REPEAT_BUYERS): RetentionDTO

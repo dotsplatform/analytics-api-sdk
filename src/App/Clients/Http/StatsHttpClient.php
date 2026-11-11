@@ -20,6 +20,7 @@ use Dotsplatform\AnalyticsApi\DTO\Events\EventStatsDTO;
 use Dotsplatform\AnalyticsApi\DTO\Funnel\FunnelDTO;
 use Dotsplatform\AnalyticsApi\DTO\Heatmap\HeatmapDTO;
 use Dotsplatform\AnalyticsApi\DTO\HourlyVisits\HourlyVisitsDTO;
+use Dotsplatform\AnalyticsApi\DTO\Installs\AppInstallsDTO;
 use Dotsplatform\AnalyticsApi\DTO\Items\TopItemsDTO;
 use Dotsplatform\AnalyticsApi\DTO\Overview\AccountOverviewDTO;
 use Dotsplatform\AnalyticsApi\DTO\Pages\TopPagesDTO;
@@ -61,6 +62,8 @@ class StatsHttpClient implements StatsClient
     private const string DEVICES_URL_TEMPLATE = 'api/v1/accounts/%s/devices';
 
     private const string RETENTION_URL_TEMPLATE = 'api/v1/accounts/%s/retention';
+
+    private const string INSTALLS_URL_TEMPLATE = 'api/v1/accounts/%s/installs';
 
     public function __construct(
         private readonly AnalyticsHttpTransport $transport,
@@ -160,6 +163,13 @@ class StatsHttpClient implements StatsClient
         $response = $this->transport->getJson($this->buildPath(self::DEVICES_URL_TEMPLATE, $request), $request->toQuery());
 
         return DevicesDTO::fromResponse($response);
+    }
+
+    public function getInstalls(StatsRequestDTO $request): AppInstallsDTO
+    {
+        $response = $this->transport->getJson($this->buildPath(self::INSTALLS_URL_TEMPLATE, $request), $request->toQuery());
+
+        return AppInstallsDTO::fromResponse($response);
     }
 
     public function getRetention(StatsRequestDTO $request, RetentionView $view = RetentionView::REPEAT_BUYERS): RetentionDTO
