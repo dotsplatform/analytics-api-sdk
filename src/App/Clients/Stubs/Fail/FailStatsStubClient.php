@@ -27,6 +27,7 @@ use Dotsplatform\AnalyticsApi\DTO\Items\TopItemsDTO;
 use Dotsplatform\AnalyticsApi\DTO\Overview\AccountOverviewDTO;
 use Dotsplatform\AnalyticsApi\DTO\Pages\TopPagesDTO;
 use Dotsplatform\AnalyticsApi\DTO\Platforms\PlatformBreakdownDTO;
+use Dotsplatform\AnalyticsApi\DTO\Push\PushStatsDTO;
 use Dotsplatform\AnalyticsApi\DTO\Requests\StatsRequestDTO;
 use Dotsplatform\AnalyticsApi\DTO\Retention\RetentionDTO;
 use Dotsplatform\AnalyticsApi\DTO\Sources\SourcesDTO;
@@ -102,6 +103,11 @@ class FailStatsStubClient implements StatsClient
     }
 
     public function getInstalls(StatsRequestDTO $request): AppInstallsDTO
+    {
+        throw StubFailure::make();
+    }
+
+    public function getPushStats(StatsRequestDTO $request): PushStatsDTO
     {
         throw StubFailure::make();
     }

@@ -25,6 +25,7 @@ use Dotsplatform\AnalyticsApi\DTO\Items\TopItemsDTO;
 use Dotsplatform\AnalyticsApi\DTO\Overview\AccountOverviewDTO;
 use Dotsplatform\AnalyticsApi\DTO\Pages\TopPagesDTO;
 use Dotsplatform\AnalyticsApi\DTO\Platforms\PlatformBreakdownDTO;
+use Dotsplatform\AnalyticsApi\DTO\Push\PushStatsDTO;
 use Dotsplatform\AnalyticsApi\DTO\Requests\StatsRequestDTO;
 use Dotsplatform\AnalyticsApi\DTO\Retention\RetentionDTO;
 use Dotsplatform\AnalyticsApi\DTO\Sources\SourcesDTO;
@@ -64,6 +65,8 @@ class StatsHttpClient implements StatsClient
     private const string RETENTION_URL_TEMPLATE = 'api/v1/accounts/%s/retention';
 
     private const string INSTALLS_URL_TEMPLATE = 'api/v1/accounts/%s/installs';
+
+    private const string PUSH_URL_TEMPLATE = 'api/v1/accounts/%s/push';
 
     public function __construct(
         private readonly AnalyticsHttpTransport $transport,
@@ -170,6 +173,13 @@ class StatsHttpClient implements StatsClient
         $response = $this->transport->getJson($this->buildPath(self::INSTALLS_URL_TEMPLATE, $request), $request->toQuery());
 
         return AppInstallsDTO::fromResponse($response);
+    }
+
+    public function getPushStats(StatsRequestDTO $request): PushStatsDTO
+    {
+        $response = $this->transport->getJson($this->buildPath(self::PUSH_URL_TEMPLATE, $request), $request->toQuery());
+
+        return PushStatsDTO::fromResponse($response);
     }
 
     public function getRetention(StatsRequestDTO $request, RetentionView $view = RetentionView::REPEAT_BUYERS): RetentionDTO

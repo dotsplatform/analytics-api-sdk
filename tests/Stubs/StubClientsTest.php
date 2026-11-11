@@ -52,6 +52,7 @@ class StubClientsTest extends TestCase
         $this->assertSame(SourceKind::PAID, $stats->getSources($request)->getSources()[0]->getKind());
         $this->assertSame('iPhone 16 Pro Max', $stats->getDevices($request)->getDeviceModels()[0]->getLabel());
         $this->assertSame(24, $stats->getInstalls($request)->getInstalls());
+        $this->assertSame(27, $stats->getPushStats($request)->getTotal()->getOpened());
         $this->assertSame(['M1', 'M2', 'M3'], $stats->getRetention($request)->getOffsets());
     }
 
@@ -112,6 +113,7 @@ class StubClientsTest extends TestCase
         yield 'sources' => [fn (AnalyticsClient $client, StatsRequestDTO $request) => $client->stats()->getSources($request)];
         yield 'devices' => [fn (AnalyticsClient $client, StatsRequestDTO $request) => $client->stats()->getDevices($request)];
         yield 'installs' => [fn (AnalyticsClient $client, StatsRequestDTO $request) => $client->stats()->getInstalls($request)];
+        yield 'push' => [fn (AnalyticsClient $client, StatsRequestDTO $request) => $client->stats()->getPushStats($request)];
         yield 'retention' => [fn (AnalyticsClient $client, StatsRequestDTO $request) => $client->stats()->getRetention($request)];
     }
 

@@ -409,6 +409,23 @@ class StatsHttpClientTest extends HttpClientTestCase
         $this->assertSame([0.0, 50.0, 12.5], $heatmap->getWeekdays()[0]->getHours());
     }
 
+    public function testReadsPushStats(): void
+    {
+        $request = $this->makeRequest();
+        $this->queueJsonResponse(StubResponses::push($request));
+
+        $push = $this->makeClient()->stats()->getPushStats($request);
+
+        $this->assertLastRequest('GET', self::ACCOUNT_PATH.'push');
+        $this->assertFalse($push->isEmpty());
+        $this->assertSame(1000, $push->getTotal()->getSent());
+        $this->assertSame(2.7, $push->getTotal()->getOpenRatePercent());
+        $this->assertSame(800, $push->getPreviousTotal()?->getSent());
+        $this->assertSame('campaign', $push->getKinds()[0]->getKey());
+        $this->assertSame(3, $push->getKinds()[1]->getFailed());
+        $this->assertNull($push->getDays()[1]->getOpenRatePercent());
+    }
+
     public function testReadsAppInstalls(): void
     {
         $request = $this->makeRequest();

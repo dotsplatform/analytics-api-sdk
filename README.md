@@ -41,6 +41,9 @@ $overview->getTotals()->getPurchases();
 adds `getAccounts()` and `getTopCategories()`, and item names and categories. Upgrading from 1.x: pass
 `$account->token` to `forAccount()` and read `getFilters()->getAccountToken()` instead of `getAccountId()`.
 
+**v2.4** adds `getPushStats()`: push notifications sent, failed, delivered and opened, per kind (campaign / order)
+and day, with the total of the period before.
+
 **v2.3** adds `getInstalls()`: app installs and updates ("Application Installed" / "Application Updated") per
 platform and day, with the totals of the period before.
 

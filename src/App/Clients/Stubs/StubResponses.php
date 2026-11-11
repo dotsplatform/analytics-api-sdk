@@ -319,6 +319,30 @@ final class StubResponses
     }
 
     /**
+     * Push: 1 000 sent over two days (900 campaign, 100 order), 27 opened; 800 sent in the period before.
+     *
+     * @return array<string, mixed>
+     */
+    public static function push(StatsRequestDTO $request): array
+    {
+        return [
+            'filters' => self::filters($request),
+            'push' => [
+                'total' => ['sent' => 1000, 'failed' => 3, 'delivered' => 0, 'opened' => 27, 'open_rate_percent' => 2.7, 'delivery_rate_percent' => 0.0],
+                'previous_total' => ['sent' => 800, 'failed' => 1, 'delivered' => 0, 'opened' => 8, 'open_rate_percent' => 1.0, 'delivery_rate_percent' => 0.0],
+                'kinds' => [
+                    ['kind' => 'campaign', 'sent' => 900, 'failed' => 0, 'delivered' => 0, 'opened' => 27, 'open_rate_percent' => 3.0, 'delivery_rate_percent' => 0.0],
+                    ['kind' => 'order', 'sent' => 100, 'failed' => 3, 'delivered' => 0, 'opened' => 0, 'open_rate_percent' => 0.0, 'delivery_rate_percent' => 0.0],
+                ],
+                'days' => [
+                    ['date' => '2026-11-10', 'sent' => 1000, 'failed' => 3, 'delivered' => 0, 'opened' => 27, 'open_rate_percent' => 2.7, 'delivery_rate_percent' => 0.0],
+                    ['date' => '2026-11-11', 'sent' => 0, 'failed' => 0, 'delivered' => 0, 'opened' => 0, 'open_rate_percent' => null, 'delivery_rate_percent' => null],
+                ],
+            ],
+        ];
+    }
+
+    /**
      * Repeat buyers: monthly cohorts with offsets M1–M3. The device views: weekly cohorts with offsets W1–W8.
      * The oldest cohort is mixed; null percents are periods that have not happened yet.
      *

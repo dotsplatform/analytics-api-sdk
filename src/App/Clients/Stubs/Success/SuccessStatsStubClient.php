@@ -29,6 +29,7 @@ use Dotsplatform\AnalyticsApi\DTO\Items\TopItemsDTO;
 use Dotsplatform\AnalyticsApi\DTO\Overview\AccountOverviewDTO;
 use Dotsplatform\AnalyticsApi\DTO\Pages\TopPagesDTO;
 use Dotsplatform\AnalyticsApi\DTO\Platforms\PlatformBreakdownDTO;
+use Dotsplatform\AnalyticsApi\DTO\Push\PushStatsDTO;
 use Dotsplatform\AnalyticsApi\DTO\Requests\StatsRequestDTO;
 use Dotsplatform\AnalyticsApi\DTO\Retention\RetentionDTO;
 use Dotsplatform\AnalyticsApi\DTO\Sources\SourcesDTO;
@@ -106,6 +107,11 @@ class SuccessStatsStubClient implements StatsClient
     public function getInstalls(StatsRequestDTO $request): AppInstallsDTO
     {
         return AppInstallsDTO::fromResponse(StubResponses::installs($request));
+    }
+
+    public function getPushStats(StatsRequestDTO $request): PushStatsDTO
+    {
+        return PushStatsDTO::fromResponse(StubResponses::push($request));
     }
 
     public function getRetention(StatsRequestDTO $request, RetentionView $view = RetentionView::REPEAT_BUYERS): RetentionDTO

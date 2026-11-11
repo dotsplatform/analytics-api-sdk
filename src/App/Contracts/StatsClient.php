@@ -28,6 +28,7 @@ use Dotsplatform\AnalyticsApi\DTO\Items\TopItemsDTO;
 use Dotsplatform\AnalyticsApi\DTO\Overview\AccountOverviewDTO;
 use Dotsplatform\AnalyticsApi\DTO\Pages\TopPagesDTO;
 use Dotsplatform\AnalyticsApi\DTO\Platforms\PlatformBreakdownDTO;
+use Dotsplatform\AnalyticsApi\DTO\Push\PushStatsDTO;
 use Dotsplatform\AnalyticsApi\DTO\Requests\StatsRequestDTO;
 use Dotsplatform\AnalyticsApi\DTO\Retention\RetentionDTO;
 use Dotsplatform\AnalyticsApi\DTO\Sources\SourcesDTO;
@@ -109,6 +110,12 @@ interface StatsClient
      * The request limit is not used.
      */
     public function getInstalls(StatsRequestDTO $request): AppInstallsDTO;
+
+    /**
+     * GET push: push notifications sent, failed, delivered and opened (campaign / order, per day, the period before).
+     * The request platform and limit are not used.
+     */
+    public function getPushStats(StatsRequestDTO $request): PushStatsDTO;
 
     /**
      * GET retention: a cohort table of the view. The request period and limit are not used; the platform applies
