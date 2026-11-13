@@ -29,6 +29,7 @@ use Dotsplatform\AnalyticsApi\DTO\Overview\AccountOverviewDTO;
 use Dotsplatform\AnalyticsApi\DTO\Pages\TopPagesDTO;
 use Dotsplatform\AnalyticsApi\DTO\Platforms\PlatformBreakdownDTO;
 use Dotsplatform\AnalyticsApi\DTO\Push\PushStatsDTO;
+use Dotsplatform\AnalyticsApi\DTO\Sessions\SessionDurationDTO;
 use Dotsplatform\AnalyticsApi\DTO\Requests\StatsRequestDTO;
 use Dotsplatform\AnalyticsApi\DTO\Retention\RetentionDTO;
 use Dotsplatform\AnalyticsApi\DTO\Sources\SourcesDTO;
@@ -116,6 +117,12 @@ interface StatsClient
      * The request platform and limit are not used.
      */
     public function getPushStats(StatsRequestDTO $request): PushStatsDTO;
+
+    /**
+     * GET session-duration: average session duration and duration buckets per platform, the "all" row last.
+     * The request limit is not used.
+     */
+    public function getSessionDuration(StatsRequestDTO $request): SessionDurationDTO;
 
     /**
      * GET retention: a cohort table of the view. The request period and limit are not used; the platform applies

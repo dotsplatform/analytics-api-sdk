@@ -343,6 +343,27 @@ final class StubResponses
     }
 
     /**
+     * Session duration: 100 web sessions (average 3 min) and 40 iOS sessions (average 7 min).
+     *
+     * @return array<string, mixed>
+     */
+    public static function sessionDuration(StatsRequestDTO $request): array
+    {
+        return [
+            'filters' => self::filters($request),
+            'session_duration' => [
+                'buckets' => ['under_10s', 'from_10s_to_1m', 'from_1m_to_3m', 'from_3m_to_10m', 'from_10m_to_30m', 'over_30m'],
+                'max_session_seconds' => 14400,
+                'rows' => [
+                    ['platform' => 'web', 'label' => 'Website', 'sessions' => 100, 'total_seconds' => 18000, 'average_seconds' => 180.0, 'median_bucket' => 'from_10s_to_1m', 'buckets' => ['under_10s' => 45, 'from_10s_to_1m' => 18, 'from_1m_to_3m' => 15, 'from_3m_to_10m' => 13, 'from_10m_to_30m' => 7, 'over_30m' => 2]],
+                    ['platform' => 'ios', 'label' => 'iOS', 'sessions' => 40, 'total_seconds' => 16800, 'average_seconds' => 420.0, 'median_bucket' => 'from_1m_to_3m', 'buckets' => ['under_10s' => 8, 'from_10s_to_1m' => 10, 'from_1m_to_3m' => 7, 'from_3m_to_10m' => 7, 'from_10m_to_30m' => 6, 'over_30m' => 2]],
+                    ['platform' => 'all', 'label' => 'All platforms', 'sessions' => 140, 'total_seconds' => 34800, 'average_seconds' => 248.6, 'median_bucket' => 'from_10s_to_1m', 'buckets' => ['under_10s' => 53, 'from_10s_to_1m' => 28, 'from_1m_to_3m' => 22, 'from_3m_to_10m' => 20, 'from_10m_to_30m' => 13, 'over_30m' => 4]],
+                ],
+            ],
+        ];
+    }
+
+    /**
      * Repeat buyers: monthly cohorts with offsets M1–M3. The device views: weekly cohorts with offsets W1–W8.
      * The oldest cohort is mixed; null percents are periods that have not happened yet.
      *

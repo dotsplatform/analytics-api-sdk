@@ -409,6 +409,24 @@ class StatsHttpClientTest extends HttpClientTestCase
         $this->assertSame([0.0, 50.0, 12.5], $heatmap->getWeekdays()[0]->getHours());
     }
 
+    public function testReadsSessionDuration(): void
+    {
+        $request = $this->makeRequest();
+        $this->queueJsonResponse(StubResponses::sessionDuration($request));
+
+        $sessionDuration = $this->makeClient()->stats()->getSessionDuration($request);
+
+        $this->assertLastRequest('GET', self::ACCOUNT_PATH.'session-duration');
+        $this->assertFalse($sessionDuration->isEmpty());
+        $this->assertSame(14400, $sessionDuration->getMaxSessionSeconds());
+        $this->assertSame('under_10s', $sessionDuration->getBucketKeys()[0]);
+        $this->assertSame('web', $sessionDuration->getRows()[0]->getPlatform());
+        $this->assertSame(180.0, $sessionDuration->getRows()[0]->getAverageSeconds());
+        $this->assertSame(45.0, $sessionDuration->getRows()[0]->getBucketPercent('under_10s'));
+        $this->assertSame('from_1m_to_3m', $sessionDuration->getRows()[1]->getMedianBucket());
+        $this->assertTrue($sessionDuration->getRows()[2]->isTotal());
+    }
+
     public function testReadsPushStats(): void
     {
         $request = $this->makeRequest();

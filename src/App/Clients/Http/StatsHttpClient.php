@@ -26,6 +26,7 @@ use Dotsplatform\AnalyticsApi\DTO\Overview\AccountOverviewDTO;
 use Dotsplatform\AnalyticsApi\DTO\Pages\TopPagesDTO;
 use Dotsplatform\AnalyticsApi\DTO\Platforms\PlatformBreakdownDTO;
 use Dotsplatform\AnalyticsApi\DTO\Push\PushStatsDTO;
+use Dotsplatform\AnalyticsApi\DTO\Sessions\SessionDurationDTO;
 use Dotsplatform\AnalyticsApi\DTO\Requests\StatsRequestDTO;
 use Dotsplatform\AnalyticsApi\DTO\Retention\RetentionDTO;
 use Dotsplatform\AnalyticsApi\DTO\Sources\SourcesDTO;
@@ -67,6 +68,8 @@ class StatsHttpClient implements StatsClient
     private const string INSTALLS_URL_TEMPLATE = 'api/v1/accounts/%s/installs';
 
     private const string PUSH_URL_TEMPLATE = 'api/v1/accounts/%s/push';
+
+    private const string SESSION_DURATION_URL_TEMPLATE = 'api/v1/accounts/%s/session-duration';
 
     public function __construct(
         private readonly AnalyticsHttpTransport $transport,
@@ -180,6 +183,13 @@ class StatsHttpClient implements StatsClient
         $response = $this->transport->getJson($this->buildPath(self::PUSH_URL_TEMPLATE, $request), $request->toQuery());
 
         return PushStatsDTO::fromResponse($response);
+    }
+
+    public function getSessionDuration(StatsRequestDTO $request): SessionDurationDTO
+    {
+        $response = $this->transport->getJson($this->buildPath(self::SESSION_DURATION_URL_TEMPLATE, $request), $request->toQuery());
+
+        return SessionDurationDTO::fromResponse($response);
     }
 
     public function getRetention(StatsRequestDTO $request, RetentionView $view = RetentionView::REPEAT_BUYERS): RetentionDTO
