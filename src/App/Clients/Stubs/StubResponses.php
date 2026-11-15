@@ -364,6 +364,91 @@ final class StubResponses
     }
 
     /**
+     * Three dishes: one opened often but rarely added, one that sells well, one ordered by phone only.
+     *
+     * @return array<string, mixed>
+     */
+    public static function itemFunnel(StatsRequestDTO $request): array
+    {
+        return [
+            'filters' => self::filters($request),
+            'min_view_sessions_for_rates' => 20,
+            'items' => [
+                self::itemFunnelRow('0193b091-0000-7000-8000-00000000000a', 'Sushi set «Krevetos»', 'Sets', [30, 24, 8, 8, 2, 0, 0, 0, 0], true),
+                self::itemFunnelRow('0193b091-0000-7000-8000-00000000000b', 'Pizza «Halia»', 'Pizza', [12, 10, 7, 7, 1, 6, 5, 7, 8], false),
+                self::itemFunnelRow('0193b091-0000-7000-8000-00000000000c', null, null, [0, 0, 0, 0, 0, 0, 0, 0, 2], false),
+            ],
+        ];
+    }
+
+    /**
+     * Three days, newest first; the oldest day has no data.
+     *
+     * @return array<string, mixed>
+     */
+    public static function itemDaily(StatsRequestDTO $request, string $itemId): array
+    {
+        return [
+            'filters' => self::filters($request),
+            'item' => ['item_id' => strtolower($itemId), 'name' => 'Pizza «Halia»', 'category' => 'Pizza'],
+            'days' => [
+                array_merge(['date' => '2026-11-14'], self::itemCounts([6, 5, 4, 4, 0, 4, 3, 4, 5])),
+                array_merge(['date' => '2026-11-13'], self::itemCounts([6, 5, 3, 3, 1, 2, 2, 3, 3])),
+                array_merge(['date' => '2026-11-12'], self::itemCounts([0, 0, 0, 0, 0, 0, 0, 0, 0])),
+            ],
+        ];
+    }
+
+    /**
+     * @param  array{0: int, 1: int, 2: int, 3: int, 4: int, 5: int, 6: int, 7: int, 8: int}  $counts
+     * @return array<string, mixed>
+     */
+    private static function itemFunnelRow(string $itemId, ?string $name, ?string $category, array $counts, bool $ratesReliable): array
+    {
+        return array_merge(
+            ['item_id' => $itemId, 'name' => $name, 'category' => $category],
+            self::itemCounts($counts),
+            ['rates_reliable' => $ratesReliable],
+        );
+    }
+
+    /**
+     * $counts in order: views, view sessions, adds, add sessions, «+» adds, orders, completed orders, quantity,
+     * orders of all channels.
+     *
+     * @param  array{0: int, 1: int, 2: int, 3: int, 4: int, 5: int, 6: int, 7: int, 8: int}  $counts
+     * @return array<string, int|float|null>
+     */
+    private static function itemCounts(array $counts): array
+    {
+        [$views, $viewSessions, $addToCart, $addSessions, $addToCartPlus, $orders, $completedOrders, $quantity, $ordersAllChannels] = $counts;
+
+        return [
+            'views' => $views,
+            'view_sessions' => $viewSessions,
+            'add_to_cart' => $addToCart,
+            'add_sessions' => $addSessions,
+            'add_to_cart_plus' => $addToCartPlus,
+            'orders' => $orders,
+            'completed_orders' => $completedOrders,
+            'quantity' => $quantity,
+            'orders_all_channels' => $ordersAllChannels,
+            'view_to_cart_rate' => self::stubRate($addSessions, $viewSessions),
+            'cart_to_order_rate' => self::stubRate($orders, $addSessions),
+            'view_to_order_rate' => self::stubRate($orders, $viewSessions),
+        ];
+    }
+
+    private static function stubRate(int $count, int $base): ?float
+    {
+        if ($base === 0) {
+            return null;
+        }
+
+        return round($count / $base, 4);
+    }
+
+    /**
      * Repeat buyers: monthly cohorts with offsets M1–M3. The device views: weekly cohorts with offsets W1–W8.
      * The oldest cohort is mixed; null percents are periods that have not happened yet.
      *

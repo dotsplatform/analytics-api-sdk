@@ -41,6 +41,9 @@ $overview->getTotals()->getPurchases();
 adds `getAccounts()` and `getTopCategories()`, and item names and categories. Upgrading from 1.x: pass
 `$account->token` to `forAccount()` and read `getFilters()->getAccountToken()` instead of `getAccountId()`.
 
+**v2.6** adds `getItemFunnel()` (per dish: opened, added to cart, ordered in livesite, and the rates between them)
+and `getItemDaily($request, $itemToken)` (one dish, one row per day), to find dishes opened often but rarely ordered.
+
 **v2.5** adds `getSessionDuration()`: average session duration and duration buckets per platform (first → last
 event of a session, capped at 4 h), with an "all platforms" row.
 

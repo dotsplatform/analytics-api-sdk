@@ -427,6 +427,41 @@ class StatsHttpClientTest extends HttpClientTestCase
         $this->assertTrue($sessionDuration->getRows()[2]->isTotal());
     }
 
+    public function testReadsTheItemFunnel(): void
+    {
+        $request = $this->makeRequest();
+        $this->queueJsonResponse(StubResponses::itemFunnel($request));
+
+        $itemFunnel = $this->makeClient()->stats()->getItemFunnel($request);
+
+        $this->assertLastRequest('GET', self::ACCOUNT_PATH.'items/funnel');
+        $this->assertFalse($itemFunnel->isEmpty());
+        $this->assertSame(20, $itemFunnel->getMinViewSessionsForRates());
+        $this->assertSame('Sushi set «Krevetos»', $itemFunnel->getItems()[0]->getName());
+        $this->assertSame(24, $itemFunnel->getItems()[0]->getCounts()->getViewSessions());
+        $this->assertSame(0.3333, $itemFunnel->getItems()[0]->getCounts()->getViewToCartRate());
+        $this->assertSame(0.0, $itemFunnel->getItems()[0]->getCounts()->getViewToOrderRate());
+        $this->assertTrue($itemFunnel->getItems()[0]->areRatesReliable());
+        $this->assertSame(8, $itemFunnel->getItems()[1]->getCounts()->getOrdersAllChannels());
+        $this->assertNull($itemFunnel->getItems()[2]->getName());
+        $this->assertNull($itemFunnel->getItems()[2]->getCounts()->getViewToCartRate());
+    }
+
+    public function testReadsTheDailyTableOfADish(): void
+    {
+        $request = $this->makeRequest();
+        $this->queueJsonResponse(StubResponses::itemDaily($request, '0193b091-0000-7000-8000-00000000000b'));
+
+        $itemDaily = $this->makeClient()->stats()->getItemDaily($request, '0193b091-0000-7000-8000-00000000000b');
+
+        $this->assertLastRequest('GET', self::ACCOUNT_PATH.'items/0193b091-0000-7000-8000-00000000000b/daily');
+        $this->assertSame('Pizza «Halia»', $itemDaily->getName());
+        $this->assertCount(3, $itemDaily->getDays());
+        $this->assertSame('2026-11-14', $itemDaily->getDays()[0]->getDate());
+        $this->assertSame(4, $itemDaily->getDays()[0]->getCounts()->getOrders());
+        $this->assertNull($itemDaily->getDays()[2]->getCounts()->getViewToCartRate());
+    }
+
     public function testReadsPushStats(): void
     {
         $request = $this->makeRequest();

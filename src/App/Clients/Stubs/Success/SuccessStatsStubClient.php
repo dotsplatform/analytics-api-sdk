@@ -30,6 +30,8 @@ use Dotsplatform\AnalyticsApi\DTO\Overview\AccountOverviewDTO;
 use Dotsplatform\AnalyticsApi\DTO\Pages\TopPagesDTO;
 use Dotsplatform\AnalyticsApi\DTO\Platforms\PlatformBreakdownDTO;
 use Dotsplatform\AnalyticsApi\DTO\Push\PushStatsDTO;
+use Dotsplatform\AnalyticsApi\DTO\Items\ItemDailyDTO;
+use Dotsplatform\AnalyticsApi\DTO\Items\ItemFunnelDTO;
 use Dotsplatform\AnalyticsApi\DTO\Sessions\SessionDurationDTO;
 use Dotsplatform\AnalyticsApi\DTO\Requests\StatsRequestDTO;
 use Dotsplatform\AnalyticsApi\DTO\Retention\RetentionDTO;
@@ -118,6 +120,16 @@ class SuccessStatsStubClient implements StatsClient
     public function getSessionDuration(StatsRequestDTO $request): SessionDurationDTO
     {
         return SessionDurationDTO::fromResponse(StubResponses::sessionDuration($request));
+    }
+
+    public function getItemFunnel(StatsRequestDTO $request): ItemFunnelDTO
+    {
+        return ItemFunnelDTO::fromResponse(StubResponses::itemFunnel($request));
+    }
+
+    public function getItemDaily(StatsRequestDTO $request, string $itemId): ItemDailyDTO
+    {
+        return ItemDailyDTO::fromResponse(StubResponses::itemDaily($request, $itemId));
     }
 
     public function getRetention(StatsRequestDTO $request, RetentionView $view = RetentionView::REPEAT_BUYERS): RetentionDTO

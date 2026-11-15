@@ -26,6 +26,8 @@ use Dotsplatform\AnalyticsApi\DTO\Overview\AccountOverviewDTO;
 use Dotsplatform\AnalyticsApi\DTO\Pages\TopPagesDTO;
 use Dotsplatform\AnalyticsApi\DTO\Platforms\PlatformBreakdownDTO;
 use Dotsplatform\AnalyticsApi\DTO\Push\PushStatsDTO;
+use Dotsplatform\AnalyticsApi\DTO\Items\ItemDailyDTO;
+use Dotsplatform\AnalyticsApi\DTO\Items\ItemFunnelDTO;
 use Dotsplatform\AnalyticsApi\DTO\Sessions\SessionDurationDTO;
 use Dotsplatform\AnalyticsApi\DTO\Requests\StatsRequestDTO;
 use Dotsplatform\AnalyticsApi\DTO\Retention\RetentionDTO;
@@ -70,6 +72,10 @@ class StatsHttpClient implements StatsClient
     private const string PUSH_URL_TEMPLATE = 'api/v1/accounts/%s/push';
 
     private const string SESSION_DURATION_URL_TEMPLATE = 'api/v1/accounts/%s/session-duration';
+
+    private const string ITEM_FUNNEL_URL_TEMPLATE = 'api/v1/accounts/%s/items/funnel';
+
+    private const string ITEM_DAILY_URL_TEMPLATE = 'api/v1/accounts/%s/items/%s/daily';
 
     public function __construct(
         private readonly AnalyticsHttpTransport $transport,
@@ -190,6 +196,21 @@ class StatsHttpClient implements StatsClient
         $response = $this->transport->getJson($this->buildPath(self::SESSION_DURATION_URL_TEMPLATE, $request), $request->toQuery());
 
         return SessionDurationDTO::fromResponse($response);
+    }
+
+    public function getItemFunnel(StatsRequestDTO $request): ItemFunnelDTO
+    {
+        $response = $this->transport->getJson($this->buildPath(self::ITEM_FUNNEL_URL_TEMPLATE, $request), $request->toQuery());
+
+        return ItemFunnelDTO::fromResponse($response);
+    }
+
+    public function getItemDaily(StatsRequestDTO $request, string $itemId): ItemDailyDTO
+    {
+        $path = $this->transport->buildPath(self::ITEM_DAILY_URL_TEMPLATE, $request->getAccountPathSegment(), $itemId);
+        $response = $this->transport->getJson($path, $request->toQuery());
+
+        return ItemDailyDTO::fromResponse($response);
     }
 
     public function getRetention(StatsRequestDTO $request, RetentionView $view = RetentionView::REPEAT_BUYERS): RetentionDTO

@@ -28,6 +28,8 @@ use Dotsplatform\AnalyticsApi\DTO\Overview\AccountOverviewDTO;
 use Dotsplatform\AnalyticsApi\DTO\Pages\TopPagesDTO;
 use Dotsplatform\AnalyticsApi\DTO\Platforms\PlatformBreakdownDTO;
 use Dotsplatform\AnalyticsApi\DTO\Push\PushStatsDTO;
+use Dotsplatform\AnalyticsApi\DTO\Items\ItemDailyDTO;
+use Dotsplatform\AnalyticsApi\DTO\Items\ItemFunnelDTO;
 use Dotsplatform\AnalyticsApi\DTO\Sessions\SessionDurationDTO;
 use Dotsplatform\AnalyticsApi\DTO\Requests\StatsRequestDTO;
 use Dotsplatform\AnalyticsApi\DTO\Retention\RetentionDTO;
@@ -114,6 +116,16 @@ class FailStatsStubClient implements StatsClient
     }
 
     public function getSessionDuration(StatsRequestDTO $request): SessionDurationDTO
+    {
+        throw StubFailure::make();
+    }
+
+    public function getItemFunnel(StatsRequestDTO $request): ItemFunnelDTO
+    {
+        throw StubFailure::make();
+    }
+
+    public function getItemDaily(StatsRequestDTO $request, string $itemId): ItemDailyDTO
     {
         throw StubFailure::make();
     }

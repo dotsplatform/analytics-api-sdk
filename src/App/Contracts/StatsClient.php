@@ -29,6 +29,8 @@ use Dotsplatform\AnalyticsApi\DTO\Overview\AccountOverviewDTO;
 use Dotsplatform\AnalyticsApi\DTO\Pages\TopPagesDTO;
 use Dotsplatform\AnalyticsApi\DTO\Platforms\PlatformBreakdownDTO;
 use Dotsplatform\AnalyticsApi\DTO\Push\PushStatsDTO;
+use Dotsplatform\AnalyticsApi\DTO\Items\ItemDailyDTO;
+use Dotsplatform\AnalyticsApi\DTO\Items\ItemFunnelDTO;
 use Dotsplatform\AnalyticsApi\DTO\Sessions\SessionDurationDTO;
 use Dotsplatform\AnalyticsApi\DTO\Requests\StatsRequestDTO;
 use Dotsplatform\AnalyticsApi\DTO\Retention\RetentionDTO;
@@ -123,6 +125,18 @@ interface StatsClient
      * The request limit is not used.
      */
     public function getSessionDuration(StatsRequestDTO $request): SessionDurationDTO;
+
+    /**
+     * GET items/funnel: per dish — opened, added to cart, ordered (livesite orders) and the rates between them.
+     * The request limit caps the most viewed and the most ordered dishes.
+     */
+    public function getItemFunnel(StatsRequestDTO $request): ItemFunnelDTO;
+
+    /**
+     * GET items/{item}/daily: one dish (livesite dish token), one row per day, newest first. The request limit is
+     * not used.
+     */
+    public function getItemDaily(StatsRequestDTO $request, string $itemId): ItemDailyDTO;
 
     /**
      * GET retention: a cohort table of the view. The request period and limit are not used; the platform applies
