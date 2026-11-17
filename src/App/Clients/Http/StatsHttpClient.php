@@ -15,22 +15,23 @@ use Dotsplatform\AnalyticsApi\Contracts\StatsClient;
 use Dotsplatform\AnalyticsApi\DTO\Accounts\AccountListDTO;
 use Dotsplatform\AnalyticsApi\DTO\ActiveUsers\ActiveUsersDTO;
 use Dotsplatform\AnalyticsApi\DTO\Categories\TopCategoriesDTO;
+use Dotsplatform\AnalyticsApi\DTO\Conversion\ConversionDTO;
 use Dotsplatform\AnalyticsApi\DTO\Devices\DevicesDTO;
 use Dotsplatform\AnalyticsApi\DTO\Events\EventStatsDTO;
 use Dotsplatform\AnalyticsApi\DTO\Funnel\FunnelDTO;
 use Dotsplatform\AnalyticsApi\DTO\Heatmap\HeatmapDTO;
 use Dotsplatform\AnalyticsApi\DTO\HourlyVisits\HourlyVisitsDTO;
 use Dotsplatform\AnalyticsApi\DTO\Installs\AppInstallsDTO;
+use Dotsplatform\AnalyticsApi\DTO\Items\ItemDailyDTO;
+use Dotsplatform\AnalyticsApi\DTO\Items\ItemFunnelDTO;
 use Dotsplatform\AnalyticsApi\DTO\Items\TopItemsDTO;
 use Dotsplatform\AnalyticsApi\DTO\Overview\AccountOverviewDTO;
 use Dotsplatform\AnalyticsApi\DTO\Pages\TopPagesDTO;
 use Dotsplatform\AnalyticsApi\DTO\Platforms\PlatformBreakdownDTO;
 use Dotsplatform\AnalyticsApi\DTO\Push\PushStatsDTO;
-use Dotsplatform\AnalyticsApi\DTO\Items\ItemDailyDTO;
-use Dotsplatform\AnalyticsApi\DTO\Items\ItemFunnelDTO;
-use Dotsplatform\AnalyticsApi\DTO\Sessions\SessionDurationDTO;
 use Dotsplatform\AnalyticsApi\DTO\Requests\StatsRequestDTO;
 use Dotsplatform\AnalyticsApi\DTO\Retention\RetentionDTO;
+use Dotsplatform\AnalyticsApi\DTO\Sessions\SessionDurationDTO;
 use Dotsplatform\AnalyticsApi\DTO\Sources\SourcesDTO;
 use Dotsplatform\AnalyticsApi\Enums\FunnelChannel;
 use Dotsplatform\AnalyticsApi\Enums\HeatmapMetric;
@@ -76,6 +77,8 @@ class StatsHttpClient implements StatsClient
     private const string ITEM_FUNNEL_URL_TEMPLATE = 'api/v1/accounts/%s/items/funnel';
 
     private const string ITEM_DAILY_URL_TEMPLATE = 'api/v1/accounts/%s/items/%s/daily';
+
+    private const string CONVERSION_URL_TEMPLATE = 'api/v1/accounts/%s/conversion';
 
     public function __construct(
         private readonly AnalyticsHttpTransport $transport,
@@ -211,6 +214,16 @@ class StatsHttpClient implements StatsClient
         $response = $this->transport->getJson($path, $request->toQuery());
 
         return ItemDailyDTO::fromResponse($response);
+    }
+
+    public function getConversion(StatsRequestDTO $request, string $group = ConversionDTO::GROUP_DAY): ConversionDTO
+    {
+        $query = $request->toQuery();
+        $query['group'] = $group;
+
+        $response = $this->transport->getJson($this->buildPath(self::CONVERSION_URL_TEMPLATE, $request), $query);
+
+        return ConversionDTO::fromResponse($response);
     }
 
     public function getRetention(StatsRequestDTO $request, RetentionView $view = RetentionView::REPEAT_BUYERS): RetentionDTO

@@ -41,6 +41,11 @@ $overview->getTotals()->getPurchases();
 adds `getAccounts()` and `getTopCategories()`, and item names and categories. Upgrading from 1.x: pass
 `$account->token` to `forAccount()` and read `getFilters()->getAccountToken()` instead of `getAccountId()`.
 
+**v2.7** adds `getConversion($request, 'day'|'month')`: per channel (web, ios, android and all) visits, real
+livesite orders, orders ÷ visits and checkout → order, per day or month, with the totals of the period and of the
+period before it, and hints (`website_checkout_gap`, `conversion_change`, `weakest_day`) as a code plus numbers, so
+the caller writes the text in its own language.
+
 **v2.6** adds `getItemFunnel()` (per dish: opened, added to cart, ordered in livesite, and the rates between them)
 and `getItemDaily($request, $itemToken)` (one dish, one row per day), to find dishes opened often but rarely ordered.
 

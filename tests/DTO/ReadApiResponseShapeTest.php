@@ -5,7 +5,7 @@ declare(strict_types=1);
 /**
  * Description of ReadApiResponseShapeTest.php
  *
- * The funnel, heatmap, sources and retention DTOs reject a response field of another type than documented with
+ * The funnel, heatmap, sources, retention and conversion DTOs reject a response field of another type than documented with
  * AnalyticsUnexpectedResponseException, so a changed API fails loudly. Each case breaks one field of a stub response.
  *
  * @copyright Copyright (c) DOTSPLATFORM, LLC
@@ -16,6 +16,7 @@ namespace Dotsplatform\AnalyticsApi\Tests\DTO;
 
 use Closure;
 use Dotsplatform\AnalyticsApi\Clients\Stubs\StubResponses;
+use Dotsplatform\AnalyticsApi\DTO\Conversion\ConversionDTO;
 use Dotsplatform\AnalyticsApi\DTO\Funnel\FunnelDTO;
 use Dotsplatform\AnalyticsApi\DTO\Heatmap\HeatmapDTO;
 use Dotsplatform\AnalyticsApi\DTO\Requests\StatsRequestDTO;
@@ -133,6 +134,34 @@ class ReadApiResponseShapeTest extends TestCase
 
             return RetentionDTO::fromResponse($response);
         }, 'account'];
+
+        yield 'conversion visits as a string' => [static function (): ConversionDTO {
+            $response = StubResponses::conversion(self::makeRequest());
+            $response['totals'] = ['web' => ['visits' => '7000', 'orders' => 1, 'conversion_rate' => null, 'checkout_sessions' => 0, 'purchase_sessions' => 0, 'checkout_to_order_rate' => null]];
+
+            return ConversionDTO::fromResponse($response);
+        }, 'visits'];
+
+        yield 'conversion rate as a string' => [static function (): ConversionDTO {
+            $response = StubResponses::conversion(self::makeRequest());
+            $response['periods'] = [['period' => '2026-11-02', 'channels' => ['web' => ['visits' => 1000, 'orders' => 45, 'conversion_rate' => '0.045', 'checkout_sessions' => 0, 'purchase_sessions' => 0, 'checkout_to_order_rate' => null]]]];
+
+            return ConversionDTO::fromResponse($response);
+        }, 'conversion_rate'];
+
+        yield 'conversion without previous totals' => [static function (): ConversionDTO {
+            $response = StubResponses::conversion(self::makeRequest());
+            unset($response['previous_totals']);
+
+            return ConversionDTO::fromResponse($response);
+        }, 'previous_totals'];
+
+        yield 'conversion hint value as a list' => [static function (): ConversionDTO {
+            $response = StubResponses::conversion(self::makeRequest());
+            $response['hints'] = [['code' => 'website_checkout_gap', 'channel' => 'web', 'values' => ['extra_orders' => [190]]]];
+
+            return ConversionDTO::fromResponse($response);
+        }, 'values.extra_orders'];
     }
 
     /**

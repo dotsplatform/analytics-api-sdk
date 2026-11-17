@@ -17,22 +17,23 @@ use Dotsplatform\AnalyticsApi\Contracts\StatsClient;
 use Dotsplatform\AnalyticsApi\DTO\Accounts\AccountListDTO;
 use Dotsplatform\AnalyticsApi\DTO\ActiveUsers\ActiveUsersDTO;
 use Dotsplatform\AnalyticsApi\DTO\Categories\TopCategoriesDTO;
+use Dotsplatform\AnalyticsApi\DTO\Conversion\ConversionDTO;
 use Dotsplatform\AnalyticsApi\DTO\Devices\DevicesDTO;
 use Dotsplatform\AnalyticsApi\DTO\Events\EventStatsDTO;
 use Dotsplatform\AnalyticsApi\DTO\Funnel\FunnelDTO;
 use Dotsplatform\AnalyticsApi\DTO\Heatmap\HeatmapDTO;
 use Dotsplatform\AnalyticsApi\DTO\HourlyVisits\HourlyVisitsDTO;
 use Dotsplatform\AnalyticsApi\DTO\Installs\AppInstallsDTO;
+use Dotsplatform\AnalyticsApi\DTO\Items\ItemDailyDTO;
+use Dotsplatform\AnalyticsApi\DTO\Items\ItemFunnelDTO;
 use Dotsplatform\AnalyticsApi\DTO\Items\TopItemsDTO;
 use Dotsplatform\AnalyticsApi\DTO\Overview\AccountOverviewDTO;
 use Dotsplatform\AnalyticsApi\DTO\Pages\TopPagesDTO;
 use Dotsplatform\AnalyticsApi\DTO\Platforms\PlatformBreakdownDTO;
 use Dotsplatform\AnalyticsApi\DTO\Push\PushStatsDTO;
-use Dotsplatform\AnalyticsApi\DTO\Items\ItemDailyDTO;
-use Dotsplatform\AnalyticsApi\DTO\Items\ItemFunnelDTO;
-use Dotsplatform\AnalyticsApi\DTO\Sessions\SessionDurationDTO;
 use Dotsplatform\AnalyticsApi\DTO\Requests\StatsRequestDTO;
 use Dotsplatform\AnalyticsApi\DTO\Retention\RetentionDTO;
+use Dotsplatform\AnalyticsApi\DTO\Sessions\SessionDurationDTO;
 use Dotsplatform\AnalyticsApi\DTO\Sources\SourcesDTO;
 use Dotsplatform\AnalyticsApi\Enums\FunnelChannel;
 use Dotsplatform\AnalyticsApi\Enums\HeatmapMetric;
@@ -126,6 +127,11 @@ class FailStatsStubClient implements StatsClient
     }
 
     public function getItemDaily(StatsRequestDTO $request, string $itemId): ItemDailyDTO
+    {
+        throw StubFailure::make();
+    }
+
+    public function getConversion(StatsRequestDTO $request, string $group = ConversionDTO::GROUP_DAY): ConversionDTO
     {
         throw StubFailure::make();
     }

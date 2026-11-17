@@ -462,6 +462,45 @@ class StatsHttpClientTest extends HttpClientTestCase
         $this->assertNull($itemDaily->getDays()[2]->getCounts()->getViewToCartRate());
     }
 
+    public function testReadsTheConversionPerDay(): void
+    {
+        $request = $this->makeRequest();
+        $this->queueJsonResponse(StubResponses::conversion($request));
+
+        $conversion = $this->makeClient()->stats()->getConversion($request);
+
+        $this->assertLastRequest('GET', self::ACCOUNT_PATH.'conversion');
+        $this->assertSame('day', $this->getLastRequestQuery()['group'] ?? null);
+        $this->assertSame('day', $conversion->getGroup());
+        $this->assertSame(['web', 'ios', 'android', 'all'], $conversion->getChannels());
+        $this->assertCount(7, $conversion->getPeriods());
+        $this->assertSame('2026-11-01', $conversion->getPeriods()[0]->getPeriod());
+        $firstWebsiteDay = $conversion->getPeriods()[0]->getChannel('web');
+        $this->assertNotNull($firstWebsiteDay);
+        $this->assertSame(1000, $firstWebsiteDay->getVisits());
+        $this->assertSame(0.045, $firstWebsiteDay->getConversionRate());
+        $this->assertSame(95, $conversion->getPeriods()[0]->getChannel('all')?->getOrders());
+        $this->assertSame(0.5, $conversion->getTotal('web')?->getCheckoutToOrderRate());
+        $this->assertSame(330, $conversion->getPreviousTotal('web')?->getOrders());
+        $this->assertCount(3, $conversion->getHints());
+        $this->assertSame('website_checkout_gap', $conversion->getHints()[0]->getCode());
+        $this->assertSame(190.0, $conversion->getHints()[0]->getNumberValue('extra_orders'));
+        $this->assertSame('2026-11-02', $conversion->getHints()[2]->getStringValue('date'));
+    }
+
+    public function testReadsTheConversionPerMonth(): void
+    {
+        $request = $this->makeRequest();
+        $this->queueJsonResponse(StubResponses::conversion($request, 'month'));
+
+        $conversion = $this->makeClient()->stats()->getConversion($request, 'month');
+
+        $this->assertSame('month', $this->getLastRequestQuery()['group'] ?? null);
+        $this->assertSame('2026-11-01', $this->getLastRequestQuery()['date_from'] ?? null);
+        $this->assertCount(1, $conversion->getPeriods());
+        $this->assertSame('2026-11', $conversion->getPeriods()[0]->getPeriod());
+    }
+
     public function testReadsPushStats(): void
     {
         $request = $this->makeRequest();

@@ -449,6 +449,90 @@ final class StubResponses
     }
 
     /**
+     * One period per day of the request period, or one per month with $group 'month'. The website converts worse
+     * than the apps; the hints are one of each code.
+     *
+     * @return array<string, mixed>
+     */
+    public static function conversion(StatsRequestDTO $request, string $group = 'day'): array
+    {
+        $periodNames = [];
+        foreach (self::periodDates($request) as $date) {
+            $periodName = $date;
+            if ($group === 'month') {
+                $periodName = substr($date, 0, 7);
+            }
+
+            $periodNames[$periodName] = true;
+        }
+
+        $periods = [];
+        foreach (array_keys($periodNames) as $periodName) {
+            $periods[] = [
+                'period' => (string) $periodName,
+                'channels' => self::conversionChannels([1000, 45, 100, 50], [400, 36, 100, 80], [200, 14, 50, 35]),
+            ];
+        }
+
+        return [
+            'filters' => self::filters($request),
+            'group' => $group,
+            'channels' => ['web', 'ios', 'android', 'all'],
+            'periods' => $periods,
+            'totals' => self::conversionChannels([7000, 315, 700, 350], [2800, 252, 700, 560], [1400, 98, 350, 245]),
+            'previous_totals' => self::conversionChannels([6000, 330, 600, 300], [2500, 225, 600, 470], [1200, 84, 300, 210]),
+            'hints' => [
+                ['code' => 'website_checkout_gap', 'channel' => 'web', 'values' => ['website_rate' => 0.5, 'apps_rate' => 0.7714, 'checkout_sessions' => 700, 'extra_orders' => 190]],
+                ['code' => 'conversion_change', 'channel' => 'web', 'values' => ['rate' => 0.045, 'previous_rate' => 0.055]],
+                ['code' => 'weakest_day', 'channel' => 'web', 'values' => ['date' => self::DATE_FROM, 'rate' => 0.03, 'period_rate' => 0.045]],
+            ],
+        ];
+    }
+
+    /**
+     * Each channel: visits, orders, checkout sessions, purchase sessions; "all" is their sum.
+     *
+     * @param  array{0: int, 1: int, 2: int, 3: int}  $web
+     * @param  array{0: int, 1: int, 2: int, 3: int}  $ios
+     * @param  array{0: int, 1: int, 2: int, 3: int}  $android
+     * @return array<string, array<string, int|float|null>>
+     */
+    private static function conversionChannels(array $web, array $ios, array $android): array
+    {
+        $all = [
+            $web[0] + $ios[0] + $android[0],
+            $web[1] + $ios[1] + $android[1],
+            $web[2] + $ios[2] + $android[2],
+            $web[3] + $ios[3] + $android[3],
+        ];
+
+        return [
+            'web' => self::conversionCounts($web),
+            'ios' => self::conversionCounts($ios),
+            'android' => self::conversionCounts($android),
+            'all' => self::conversionCounts($all),
+        ];
+    }
+
+    /**
+     * @param  array{0: int, 1: int, 2: int, 3: int}  $counts
+     * @return array<string, int|float|null>
+     */
+    private static function conversionCounts(array $counts): array
+    {
+        [$visits, $orders, $checkoutSessions, $purchaseSessions] = $counts;
+
+        return [
+            'visits' => $visits,
+            'orders' => $orders,
+            'conversion_rate' => self::stubRate($orders, $visits),
+            'checkout_sessions' => $checkoutSessions,
+            'purchase_sessions' => $purchaseSessions,
+            'checkout_to_order_rate' => self::stubRate($purchaseSessions, $checkoutSessions),
+        ];
+    }
+
+    /**
      * Repeat buyers: monthly cohorts with offsets M1–M3. The device views: weekly cohorts with offsets W1–W8.
      * The oldest cohort is mixed; null percents are periods that have not happened yet.
      *

@@ -56,6 +56,8 @@ class StubClientsTest extends TestCase
         $this->assertSame(140, $stats->getSessionDuration($request)->getRows()[2]->getSessions());
         $this->assertSame(8, $stats->getItemFunnel($request)->getItems()[1]->getCounts()->getOrdersAllChannels());
         $this->assertSame('abc', $stats->getItemDaily($request, 'ABC')->getItemId());
+        $this->assertSame(0.5, $stats->getConversion($request)->getTotal('web')?->getCheckoutToOrderRate());
+        $this->assertSame('month', $stats->getConversion($request, 'month')->getGroup());
         $this->assertSame(['M1', 'M2', 'M3'], $stats->getRetention($request)->getOffsets());
     }
 
@@ -120,6 +122,7 @@ class StubClientsTest extends TestCase
         yield 'session duration' => [fn (AnalyticsClient $client, StatsRequestDTO $request) => $client->stats()->getSessionDuration($request)];
         yield 'item funnel' => [fn (AnalyticsClient $client, StatsRequestDTO $request) => $client->stats()->getItemFunnel($request)];
         yield 'item daily' => [fn (AnalyticsClient $client, StatsRequestDTO $request) => $client->stats()->getItemDaily($request, 'dish')];
+        yield 'conversion' => [fn (AnalyticsClient $client, StatsRequestDTO $request) => $client->stats()->getConversion($request)];
         yield 'retention' => [fn (AnalyticsClient $client, StatsRequestDTO $request) => $client->stats()->getRetention($request)];
     }
 
