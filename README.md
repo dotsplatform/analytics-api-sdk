@@ -41,6 +41,11 @@ $overview->getTotals()->getPurchases();
 adds `getAccounts()` and `getTopCategories()`, and item names and categories. Upgrading from 1.x: pass
 `$account->token` to `forAccount()` and read `getFilters()->getAccountToken()` instead of `getAccountId()`.
 
+**v2.8** adds an optional `$itemIds` to `getItemFunnel($request, $itemIds)`: livesite dish tokens (uuids, at most
+`StatsClient::ITEM_FUNNEL_MAX_ITEM_IDS` = 100) answer exactly those dishes, zeros included, instead of the most viewed
+and most ordered ones — for the dishes on one admin page. Ids that are not uuids, or too many, throw
+`InvalidArgumentException` before any HTTP. Needs the analytics service with `item_ids` support.
+
 **v2.7** adds `getConversion($request, 'day'|'month')`: per channel (web, ios, android and all) visits, real
 livesite orders, orders ÷ visits and checkout → order, per day or month, with the totals of the period and of the
 period before it, and hints (`website_checkout_gap`, `conversion_change`, `weakest_day`) as a code plus numbers, so

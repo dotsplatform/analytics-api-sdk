@@ -15,6 +15,7 @@ declare(strict_types=1);
 namespace Dotsplatform\AnalyticsApi\Tests\Clients;
 
 use Dotsplatform\AnalyticsApi\Clients\Stubs\StubResponses;
+use Dotsplatform\AnalyticsApi\Contracts\StatsClient;
 use Dotsplatform\AnalyticsApi\DTO\Requests\StatsRequestDTO;
 use Dotsplatform\AnalyticsApi\DTO\Retention\RetentionDTO;
 use Dotsplatform\AnalyticsApi\DTO\Sources\SourceDTO;
@@ -25,6 +26,7 @@ use Dotsplatform\AnalyticsApi\Enums\Platform;
 use Dotsplatform\AnalyticsApi\Enums\RetentionView;
 use Dotsplatform\AnalyticsApi\Enums\SourceKind;
 use Dotsplatform\AnalyticsApi\Tests\HttpClientTestCase;
+use InvalidArgumentException;
 
 class StatsHttpClientTest extends HttpClientTestCase
 {
@@ -445,6 +447,44 @@ class StatsHttpClientTest extends HttpClientTestCase
         $this->assertSame(8, $itemFunnel->getItems()[1]->getCounts()->getOrdersAllChannels());
         $this->assertNull($itemFunnel->getItems()[2]->getName());
         $this->assertNull($itemFunnel->getItems()[2]->getCounts()->getViewToCartRate());
+    }
+
+    public function testAsksTheItemFunnelForGivenDishes(): void
+    {
+        $request = $this->makeRequest();
+        $pizza = '0193B091-0000-7000-8000-00000000000B';
+        $unknownDish = '0193b091-0000-7000-8000-0000000000ff';
+        $this->queueJsonResponse(StubResponses::itemFunnel($request, [$pizza, $unknownDish]));
+
+        $itemFunnel = $this->makeClient()->stats()->getItemFunnel($request, [$pizza, $unknownDish, strtolower($pizza)]);
+
+        $this->assertLastRequest('GET', self::ACCOUNT_PATH.'items/funnel');
+        $this->assertSame(
+            ['date_from' => '2026-11-01', 'date_to' => '2026-11-07', 'item_ids' => strtolower($pizza).','.$unknownDish],
+            $this->getLastRequestQuery(),
+        );
+        $this->assertCount(2, $itemFunnel->getItems());
+        $this->assertSame(8, $itemFunnel->getItems()[0]->getCounts()->getOrdersAllChannels());
+        $this->assertSame(0, $itemFunnel->getItems()[1]->getCounts()->getViewSessions());
+    }
+
+    public function testRefusesItemFunnelIdsThatAreNotUuidsBeforeHttp(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+
+        $this->makeClient()->stats()->getItemFunnel($this->makeRequest(), ['pizza']);
+    }
+
+    public function testRefusesMoreItemFunnelIdsThanTheServiceTakes(): void
+    {
+        $itemIds = [];
+        for ($index = 0; $index <= StatsClient::ITEM_FUNNEL_MAX_ITEM_IDS; $index++) {
+            $itemIds[] = sprintf('0193b091-0000-7000-8000-%012d', $index);
+        }
+
+        $this->expectException(InvalidArgumentException::class);
+
+        $this->makeClient()->stats()->getItemFunnel($this->makeRequest(), $itemIds);
     }
 
     public function testReadsTheDailyTableOfADish(): void

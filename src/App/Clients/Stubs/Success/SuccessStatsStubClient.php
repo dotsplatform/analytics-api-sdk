@@ -123,9 +123,9 @@ class SuccessStatsStubClient implements StatsClient
         return SessionDurationDTO::fromResponse(StubResponses::sessionDuration($request));
     }
 
-    public function getItemFunnel(StatsRequestDTO $request): ItemFunnelDTO
+    public function getItemFunnel(StatsRequestDTO $request, array $itemIds = []): ItemFunnelDTO
     {
-        return ItemFunnelDTO::fromResponse(StubResponses::itemFunnel($request));
+        return ItemFunnelDTO::fromResponse(StubResponses::itemFunnel($request, $itemIds));
     }
 
     public function getItemDaily(StatsRequestDTO $request, string $itemId): ItemDailyDTO

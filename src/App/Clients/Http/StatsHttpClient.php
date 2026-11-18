@@ -37,9 +37,12 @@ use Dotsplatform\AnalyticsApi\Enums\FunnelChannel;
 use Dotsplatform\AnalyticsApi\Enums\HeatmapMetric;
 use Dotsplatform\AnalyticsApi\Enums\RetentionView;
 use Dotsplatform\AnalyticsApi\Http\AnalyticsHttpTransport;
+use InvalidArgumentException;
 
 class StatsHttpClient implements StatsClient
 {
+    private const string UUID_PATTERN = '/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i';
+
     private const string ACCOUNTS_URL = 'api/v1/accounts';
 
     private const string CATEGORIES_URL_TEMPLATE = 'api/v1/accounts/%s/categories';
@@ -201,9 +204,14 @@ class StatsHttpClient implements StatsClient
         return SessionDurationDTO::fromResponse($response);
     }
 
-    public function getItemFunnel(StatsRequestDTO $request): ItemFunnelDTO
+    public function getItemFunnel(StatsRequestDTO $request, array $itemIds = []): ItemFunnelDTO
     {
-        $response = $this->transport->getJson($this->buildPath(self::ITEM_FUNNEL_URL_TEMPLATE, $request), $request->toQuery());
+        $query = $request->toQuery();
+        if ($itemIds !== []) {
+            $query['item_ids'] = $this->makeItemIdsQueryValue($itemIds);
+        }
+
+        $response = $this->transport->getJson($this->buildPath(self::ITEM_FUNNEL_URL_TEMPLATE, $request), $query);
 
         return ItemFunnelDTO::fromResponse($response);
     }
@@ -234,6 +242,31 @@ class StatsHttpClient implements StatsClient
         $response = $this->transport->getJson($this->buildPath(self::RETENTION_URL_TEMPLATE, $request), $query);
 
         return RetentionDTO::fromResponse($response);
+    }
+
+    /**
+     * The ids joined by commas (lower case, duplicates left out): 100 uuids keep the URL at about 3.7 KB.
+     *
+     * @param  list<string>  $itemIds
+     *
+     * @throws InvalidArgumentException
+     */
+    private function makeItemIdsQueryValue(array $itemIds): string
+    {
+        $uniqueItemIds = [];
+        foreach ($itemIds as $itemId) {
+            if (preg_match(self::UUID_PATTERN, $itemId) !== 1) {
+                throw new InvalidArgumentException(sprintf('An item id must be a uuid (livesite dish token), "%s" given.', $itemId));
+            }
+
+            $uniqueItemIds[strtolower($itemId)] = true;
+        }
+
+        if (count($uniqueItemIds) > StatsClient::ITEM_FUNNEL_MAX_ITEM_IDS) {
+            throw new InvalidArgumentException(sprintf('getItemFunnel() takes at most %d item ids.', StatsClient::ITEM_FUNNEL_MAX_ITEM_IDS));
+        }
+
+        return implode(',', array_keys($uniqueItemIds));
     }
 
     private function buildPath(string $template, StatsRequestDTO $request): string

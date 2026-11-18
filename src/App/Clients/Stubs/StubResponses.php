@@ -364,21 +364,46 @@ final class StubResponses
     }
 
     /**
-     * Three dishes: one opened often but rarely added, one that sells well, one ordered by phone only.
+     * Three dishes: one opened often but rarely added, one that sells well, one ordered by phone only. With $itemIds
+     * (like the service): exactly those dishes in the given order, a dish the stub does not know with zeros.
      *
+     * @param  list<string>  $itemIds
      * @return array<string, mixed>
      */
-    public static function itemFunnel(StatsRequestDTO $request): array
+    public static function itemFunnel(StatsRequestDTO $request, array $itemIds = []): array
     {
+        $rowsByItemId = [
+            '0193b091-0000-7000-8000-00000000000a' => self::itemFunnelRow('0193b091-0000-7000-8000-00000000000a', 'Sushi set «Krevetos»', 'Sets', [30, 24, 8, 8, 2, 0, 0, 0, 0], true),
+            '0193b091-0000-7000-8000-00000000000b' => self::itemFunnelRow('0193b091-0000-7000-8000-00000000000b', 'Pizza «Halia»', 'Pizza', [12, 10, 7, 7, 1, 6, 5, 7, 8], false),
+            '0193b091-0000-7000-8000-00000000000c' => self::itemFunnelRow('0193b091-0000-7000-8000-00000000000c', null, null, [0, 0, 0, 0, 0, 0, 0, 0, 2], false),
+        ];
+
+        $rows = array_values($rowsByItemId);
+        if ($itemIds !== []) {
+            $rows = self::pickItemFunnelRows($rowsByItemId, $itemIds);
+        }
+
         return [
             'filters' => self::filters($request),
             'min_view_sessions_for_rates' => 20,
-            'items' => [
-                self::itemFunnelRow('0193b091-0000-7000-8000-00000000000a', 'Sushi set «Krevetos»', 'Sets', [30, 24, 8, 8, 2, 0, 0, 0, 0], true),
-                self::itemFunnelRow('0193b091-0000-7000-8000-00000000000b', 'Pizza «Halia»', 'Pizza', [12, 10, 7, 7, 1, 6, 5, 7, 8], false),
-                self::itemFunnelRow('0193b091-0000-7000-8000-00000000000c', null, null, [0, 0, 0, 0, 0, 0, 0, 0, 2], false),
-            ],
+            'items' => $rows,
         ];
+    }
+
+    /**
+     * @param  array<string, array<string, mixed>>  $rowsByItemId
+     * @param  list<string>  $itemIds
+     * @return list<array<string, mixed>>
+     */
+    private static function pickItemFunnelRows(array $rowsByItemId, array $itemIds): array
+    {
+        $pickedRows = [];
+        foreach ($itemIds as $itemId) {
+            $itemId = strtolower($itemId);
+            $pickedRows[] = $rowsByItemId[$itemId] ?? self::itemFunnelRow($itemId, null, null, [0, 0, 0, 0, 0, 0, 0, 0, 0], false);
+        }
+
+        return $pickedRows;
     }
 
     /**

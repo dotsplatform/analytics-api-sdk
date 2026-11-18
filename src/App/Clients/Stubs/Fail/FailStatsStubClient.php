@@ -121,7 +121,7 @@ class FailStatsStubClient implements StatsClient
         throw StubFailure::make();
     }
 
-    public function getItemFunnel(StatsRequestDTO $request): ItemFunnelDTO
+    public function getItemFunnel(StatsRequestDTO $request, array $itemIds = []): ItemFunnelDTO
     {
         throw StubFailure::make();
     }
