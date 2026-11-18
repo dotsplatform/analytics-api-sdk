@@ -39,9 +39,15 @@ use Dotsplatform\AnalyticsApi\DTO\Sources\SourcesDTO;
 use Dotsplatform\AnalyticsApi\Enums\FunnelChannel;
 use Dotsplatform\AnalyticsApi\Enums\HeatmapMetric;
 use Dotsplatform\AnalyticsApi\Enums\RetentionView;
+use InvalidArgumentException;
 
 interface StatsClient
 {
+    /**
+     * How many dishes one getItemFunnel() call may ask for by id (the service refuses more).
+     */
+    public const int ITEM_FUNNEL_MAX_ITEM_IDS = 100;
+
     /**
      * GET accounts: every account the service knows (token, name, domain, logo URL).
      */
@@ -129,9 +135,15 @@ interface StatsClient
 
     /**
      * GET items/funnel: per dish — opened, added to cart, ordered (livesite orders) and the rates between them.
-     * The request limit caps the most viewed and the most ordered dishes.
+     * Without $itemIds: the most viewed and the most ordered dishes, the request limit caps each list.
+     * With $itemIds (livesite dish tokens, uuids, at most ITEM_FUNNEL_MAX_ITEM_IDS): exactly those dishes, zeros
+     * included, and the limit is not used.
+     *
+     * @param  list<string>  $itemIds
+     *
+     * @throws InvalidArgumentException when an item id is not a uuid or there are more than ITEM_FUNNEL_MAX_ITEM_IDS
      */
-    public function getItemFunnel(StatsRequestDTO $request): ItemFunnelDTO;
+    public function getItemFunnel(StatsRequestDTO $request, array $itemIds = []): ItemFunnelDTO;
 
     /**
      * GET items/{item}/daily: one dish (livesite dish token), one row per day, newest first. The request limit is
