@@ -41,6 +41,10 @@ $overview->getTotals()->getPurchases();
 adds `getAccounts()` and `getTopCategories()`, and item names and categories. Upgrading from 1.x: pass
 `$account->token` to `forAccount()` and read `getFilters()->getAccountToken()` instead of `getAccountId()`.
 
+**v2.9** adds `getQrScans()`: scans of the app QR codes (client-web `/app?src=<placement>`) per src, phone platform
+and day — store redirects (App Store / Google Play), apps page views and the store buttons tapped there. Installs from
+a QR code are in Play Console / App Store Connect, campaign = src.
+
 **v2.8** adds an optional `$itemIds` to `getItemFunnel($request, $itemIds)`: livesite dish tokens (uuids, at most
 `StatsClient::ITEM_FUNNEL_MAX_ITEM_IDS` = 100) answer exactly those dishes, zeros included, instead of the most viewed
 and most ordered ones — for the dishes on one admin page. Ids that are not uuids, or too many, throw

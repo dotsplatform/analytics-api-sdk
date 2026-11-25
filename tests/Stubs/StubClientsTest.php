@@ -53,6 +53,7 @@ class StubClientsTest extends TestCase
         $this->assertSame('iPhone 16 Pro Max', $stats->getDevices($request)->getDeviceModels()[0]->getLabel());
         $this->assertSame(24, $stats->getInstalls($request)->getInstalls());
         $this->assertSame(27, $stats->getPushStats($request)->getTotal()->getOpened());
+        $this->assertSame(30, $stats->getQrScans($request)->getTotals()->getScans());
         $this->assertSame(140, $stats->getSessionDuration($request)->getRows()[2]->getSessions());
         $this->assertSame(8, $stats->getItemFunnel($request)->getItems()[1]->getCounts()->getOrdersAllChannels());
         $this->assertSame('abc', $stats->getItemDaily($request, 'ABC')->getItemId());
@@ -119,6 +120,7 @@ class StubClientsTest extends TestCase
         yield 'devices' => [fn (AnalyticsClient $client, StatsRequestDTO $request) => $client->stats()->getDevices($request)];
         yield 'installs' => [fn (AnalyticsClient $client, StatsRequestDTO $request) => $client->stats()->getInstalls($request)];
         yield 'push' => [fn (AnalyticsClient $client, StatsRequestDTO $request) => $client->stats()->getPushStats($request)];
+        yield 'qr scans' => [fn (AnalyticsClient $client, StatsRequestDTO $request) => $client->stats()->getQrScans($request)];
         yield 'session duration' => [fn (AnalyticsClient $client, StatsRequestDTO $request) => $client->stats()->getSessionDuration($request)];
         yield 'item funnel' => [fn (AnalyticsClient $client, StatsRequestDTO $request) => $client->stats()->getItemFunnel($request)];
         yield 'item daily' => [fn (AnalyticsClient $client, StatsRequestDTO $request) => $client->stats()->getItemDaily($request, 'dish')];

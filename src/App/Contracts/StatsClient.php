@@ -32,6 +32,7 @@ use Dotsplatform\AnalyticsApi\DTO\Overview\AccountOverviewDTO;
 use Dotsplatform\AnalyticsApi\DTO\Pages\TopPagesDTO;
 use Dotsplatform\AnalyticsApi\DTO\Platforms\PlatformBreakdownDTO;
 use Dotsplatform\AnalyticsApi\DTO\Push\PushStatsDTO;
+use Dotsplatform\AnalyticsApi\DTO\QrScans\QrScansDTO;
 use Dotsplatform\AnalyticsApi\DTO\Requests\StatsRequestDTO;
 use Dotsplatform\AnalyticsApi\DTO\Retention\RetentionDTO;
 use Dotsplatform\AnalyticsApi\DTO\Sessions\SessionDurationDTO;
@@ -126,6 +127,13 @@ interface StatsClient
      * The request platform and limit are not used.
      */
     public function getPushStats(StatsRequestDTO $request): PushStatsDTO;
+
+    /**
+     * GET qr-scans: scans of the app QR codes (client-web /app?src=<placement>) — totals, per src, per phone platform
+     * and per day, with the store redirects, the apps page views and the store buttons tapped there. The request
+     * platform matches the phone of the scan (ios, android); the limit caps the sources list.
+     */
+    public function getQrScans(StatsRequestDTO $request): QrScansDTO;
 
     /**
      * GET session-duration: average session duration and duration buckets per platform, the "all" row last.
