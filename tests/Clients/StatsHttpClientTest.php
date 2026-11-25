@@ -576,6 +576,27 @@ class StatsHttpClientTest extends HttpClientTestCase
         $this->assertSame(30, $installs->getDays()[1]->getUpdates());
     }
 
+    public function testReadsQrScans(): void
+    {
+        $request = $this->makeRequest();
+        $this->queueJsonResponse(StubResponses::qrScans($request));
+
+        $qrScans = $this->makeClient()->stats()->getQrScans($request);
+
+        $this->assertLastRequest('GET', self::ACCOUNT_PATH.'qr-scans');
+        $this->assertFalse($qrScans->isEmpty());
+        $this->assertSame('total', $qrScans->getTotals()->getKey());
+        $this->assertSame(30, $qrScans->getTotals()->getScans());
+        $this->assertSame(22, $qrScans->getTotals()->getRedirects());
+        $this->assertSame(8, $qrScans->getTotals()->getFallbackViews());
+        $this->assertSame(5, $qrScans->getTotals()->getStoreClicks());
+        $this->assertSame('table_tent', $qrScans->getSources()[0]->getKey());
+        $this->assertSame(3, $qrScans->getSources()[0]->getGooglePlayClicks());
+        $this->assertSame('other', $qrScans->getPlatforms()[2]->getKey());
+        $this->assertSame('2026-11-25', $qrScans->getDays()[1]->getKey());
+        $this->assertSame(12, $qrScans->getDays()[1]->getRedirectsIos());
+    }
+
     public function testReadsDevicesAndVersions(): void
     {
         $request = $this->makeRequest();

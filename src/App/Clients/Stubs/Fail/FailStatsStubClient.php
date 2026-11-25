@@ -31,6 +31,7 @@ use Dotsplatform\AnalyticsApi\DTO\Overview\AccountOverviewDTO;
 use Dotsplatform\AnalyticsApi\DTO\Pages\TopPagesDTO;
 use Dotsplatform\AnalyticsApi\DTO\Platforms\PlatformBreakdownDTO;
 use Dotsplatform\AnalyticsApi\DTO\Push\PushStatsDTO;
+use Dotsplatform\AnalyticsApi\DTO\QrScans\QrScansDTO;
 use Dotsplatform\AnalyticsApi\DTO\Requests\StatsRequestDTO;
 use Dotsplatform\AnalyticsApi\DTO\Retention\RetentionDTO;
 use Dotsplatform\AnalyticsApi\DTO\Sessions\SessionDurationDTO;
@@ -112,6 +113,11 @@ class FailStatsStubClient implements StatsClient
     }
 
     public function getPushStats(StatsRequestDTO $request): PushStatsDTO
+    {
+        throw StubFailure::make();
+    }
+
+    public function getQrScans(StatsRequestDTO $request): QrScansDTO
     {
         throw StubFailure::make();
     }

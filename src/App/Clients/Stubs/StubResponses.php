@@ -319,6 +319,51 @@ final class StubResponses
     }
 
     /**
+     * QR scans over two days: 30 scans (12 to the App Store, 10 to Google Play, 8 apps page views) and 5 store
+     * buttons tapped on the apps page, from two placements.
+     *
+     * @return array<string, mixed>
+     */
+    public static function qrScans(StatsRequestDTO $request): array
+    {
+        return [
+            'filters' => self::filters($request),
+            'qr_scans' => [
+                'totals' => self::qrScanCounts(30, 12, 10, 8, 2, 3),
+                'sources' => [
+                    ['src' => 'table_tent'] + self::qrScanCounts(22, 12, 10, 0, 2, 3),
+                    ['src' => 'flyer'] + self::qrScanCounts(8, 0, 0, 8, 0, 0),
+                ],
+                'platforms' => [
+                    ['platform' => 'ios'] + self::qrScanCounts(12, 12, 0, 0, 0, 0),
+                    ['platform' => 'android'] + self::qrScanCounts(10, 0, 10, 0, 0, 0),
+                    ['platform' => 'other'] + self::qrScanCounts(8, 0, 0, 8, 2, 3),
+                ],
+                'days' => [
+                    ['date' => '2026-11-24'] + self::qrScanCounts(10, 0, 10, 0, 0, 0),
+                    ['date' => '2026-11-25'] + self::qrScanCounts(20, 12, 0, 8, 2, 3),
+                ],
+            ],
+        ];
+    }
+
+    /**
+     * @return array<string, int>
+     */
+    private static function qrScanCounts(int $scans, int $redirectsIos, int $redirectsAndroid, int $fallbackViews, int $appStoreClicks, int $googlePlayClicks): array
+    {
+        return [
+            'scans' => $scans,
+            'redirects_ios' => $redirectsIos,
+            'redirects_android' => $redirectsAndroid,
+            'fallback_views' => $fallbackViews,
+            'store_clicks' => $appStoreClicks + $googlePlayClicks,
+            'app_store_clicks' => $appStoreClicks,
+            'google_play_clicks' => $googlePlayClicks,
+        ];
+    }
+
+    /**
      * Push: 1 000 sent over two days (900 campaign, 100 order), 27 opened; 800 sent in the period before.
      *
      * @return array<string, mixed>
